@@ -29,9 +29,29 @@ def _require_columns(dataset, audio_column: str, text_column: str, name: str) ->
         raise ValueError(
             f"Dataset '{name}' is missing column(s) {missing}. "
             f"Available columns: {available}. "
-            f"Set dataset.audio_column / dataset.text_column to match — many "
-            f"Darija sets use e.g. audio='audio', text='darija_ar' (Arabic script)."
+            f"Set dataset.audio_column / dataset.text_column to match — e.g. "
+            f"DODa uses audio='audio', text='darija_Arab_new' (Arabic script)."
         )
+
+
+def _grouped_split(dataset, group_column: str, test_size: float, seed: int):
+    """Split rows so a value in `group_column` never appears in both halves.
+
+    Parallel datasets like DODa record the same sentence multiple times; a plain
+    random row split would leak those sentences across train/eval and inflate the
+    score. We split the *unique* transcripts instead, then assign whole groups.
+    """
+    import random
+
+    values = dataset[group_column]
+    groups = sorted(set(values))
+    random.Random(seed).shuffle(groups)
+    n_eval = max(1, int(len(groups) * test_size))
+    eval_groups = set(groups[:n_eval])
+    eval_idx, train_idx = [], []
+    for i, v in enumerate(values):
+        (eval_idx if v in eval_groups else train_idx).append(i)
+    return dataset.select(train_idx), dataset.select(eval_idx)
 
 
 def load_splits(cfg: dict) -> DatasetDict:
@@ -39,7 +59,8 @@ def load_splits(cfg: dict) -> DatasetDict:
 
     Robust to real-world Darija sets: if the eval split is missing (or
     `dataset.eval_split` is null) a validation set is carved out of train using
-    `dataset.test_size`, and missing columns raise a clear, actionable error.
+    `dataset.test_size`, split by sentence so no transcript appears in both
+    train and eval. Missing columns raise a clear, actionable error.
     """
     d = cfg["dataset"]
     load_kwargs: dict[str, Any] = {}
@@ -60,10 +81,14 @@ def load_splits(cfg: dict) -> DatasetDict:
             )
             eval_split = None
     if not eval_split:
-        split = raw["train"].train_test_split(
-            test_size=float(d.get("test_size", 0.1)), seed=cfg["training"]["seed"]
+        # Validate before carving: the grouped split needs the text column.
+        _require_columns(raw["train"], d["audio_column"], d["text_column"], d["name"])
+        raw["train"], raw["eval"] = _grouped_split(
+            raw["train"],
+            d["text_column"],
+            test_size=float(d.get("test_size", 0.1)),
+            seed=cfg["training"]["seed"],
         )
-        raw["train"], raw["eval"] = split["train"], split["test"]
 
     # Validate + normalise columns to canonical {audio, text}.
     for split in raw:

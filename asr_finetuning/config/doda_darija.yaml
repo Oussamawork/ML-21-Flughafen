@@ -8,14 +8,15 @@
 # Arabic script and Latin (Arabizi) plus English translations. License: see the
 # dataset card (DODa is openly released for research).
 #
-# ⚠️ VERIFY BEFORE TRAINING: open the dataset viewer on the HF Hub and confirm
-# the exact column names + available splits, then adjust `text_column` /
-# `audio_column` / `eval_split` below if they differ. The loader will otherwise
-# fail fast and print the available columns. Best guess wired below:
-#   audio_column: audio
-#   text_column:  darija_ar   (Arabic-script transcription — what Whisper wants)
-# DODa-audio may ship a single `train` split; eval_split: null carves a 10%
-# validation set automatically.
+# Schema confirmed from the HF Hub dataset card (atlasia/DODa-audio-dataset):
+#   splits:  train only (12,743 examples) — no test/validation split
+#   columns: audio (16 kHz), darija_Latn, darija_Arab_new, darija_Arab_old, english
+# We use `darija_Arab_new` (Arabic-script transcription) as the target Whisper text.
+# Because there is no eval split, eval_split: null carves a validation set out of
+# train; the carve is grouped by sentence so the same utterance never lands in
+# both train and eval (see data.load_splits).
+# NOTE: the dataset is gated ("gated: auto") — accept the terms on the dataset
+# page and authenticate (`huggingface-cli login`) before training.
 
 model:
   name: openai/whisper-small
@@ -26,10 +27,10 @@ dataset:
   name: atlasia/DODa-audio-dataset
   config: null
   train_split: train
-  eval_split: null        # auto-carve validation from train
+  eval_split: null            # no eval split on the Hub -> carve from train
   test_size: 0.1
   audio_column: audio
-  text_column: darija_ar  # Arabic-script Darija transcription (verify on the Hub)
+  text_column: darija_Arab_new  # Arabic-script Darija transcription (confirmed on the Hub)
   max_train_samples: null
   max_eval_samples: null
 
