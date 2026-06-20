@@ -83,8 +83,14 @@ when implementing the matching TDD): `agent/` (TDD-02/03), `knowledge_base/`
 
 ## Git workflow
 
-- Work on branch `claude/professor-projects-analysis-t99iau`. **PR #1 (the
-  initial docs + ASR scaffold) has been merged into `main`.** Further pushes to
-  this branch open a new PR for the next batch of work — that is expected.
-- Commit when a unit of work is complete; push with
-  `git push -u origin claude/professor-projects-analysis-t99iau`.
+- **One branch + one PR per TDD/component.** When you implement a component,
+  cut a dedicated branch off `main` named for its TDD (e.g.
+  `feat/tdd-06-backend`, `feat/tdd-02-agent`), do the work there, and open its
+  own PR. Keep each PR scoped to a single TDD so reviews stay focused.
+- The initial documentation (PROJECT_REQUIREMENTS, the TDD set, PROGRESS,
+  CLAUDE.md, and the ASR scaffold) was merged into `main` via **PR #1** — those
+  docs stay as-is; do not try to re-split them.
+- Small cross-cutting doc/chore updates (like this file or `docs/PROGRESS.md`)
+  may go on a short-lived `chore/*` or `docs/*` branch with their own PR.
+- Always branch from an up-to-date `main`: `git fetch origin && git switch -c
+  feat/tdd-0X-<name> origin/main`. Push with `git push -u origin <branch>`.

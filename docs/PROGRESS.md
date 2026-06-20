@@ -40,6 +40,10 @@ M5 Eval+Deploy. → Currently inside **M1**.
   (configurable), default Common Voice Arabic; metric WER+CER.
 - **2026-06-20** Documentation approach: one TDD per component (TDD-00…09) +
   this progress log. All written in full detail upfront.
+- **2026-06-20** PR #1 (initial docs + ASR scaffold) merged into `main`.
+- **2026-06-20** Workflow: **one branch + one PR per TDD/component** going
+  forward. Each implementation gets a dedicated branch off `main`
+  (e.g. `feat/tdd-06-backend`) with its own scoped PR. Merged TDD docs stay as-is.
 
 ## 3. Open questions / to resolve
 
