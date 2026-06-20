@@ -47,6 +47,13 @@ huggingface-cli login
 
 ## Quickstart
 
+> **No GPU?** The easiest path is the click-to-run notebook
+> [`notebooks/finetune_whisper_colab.ipynb`](notebooks/finetune_whisper_colab.ipynb):
+> open it in **browser Colab** *or* **VS Code (Google Colab extension)**, pick a
+> free **T4 GPU**, and run the cells (GPU check → clone → install → HF login →
+> smoke test → baseline eval → fine-tune → eval → push to Hub). The cells just
+> call the `src.*` scripts below.
+
 ```bash
 # 0. Sanity check the pipeline (few samples, 5 steps)
 bash scripts/smoke_test.sh
