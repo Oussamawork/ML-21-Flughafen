@@ -1,0 +1,107 @@
+"""Dataset loading, preprocessing, and the speech seq2seq data collator."""
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from typing import Any
+
+import torch
+from datasets import Audio, DatasetDict, load_dataset
+
+# Arabic punctuation + Latin punctuation we may strip when normalising text.
+_PUNCT_RE = re.compile(r"[\.\,\;\:\!\?\"\'\(\)\[\]\{\}«»…ـ،؛؟]")
+
+
+def _normalise_text(text: str, lowercase: bool, remove_punctuation: bool) -> str:
+    text = text.strip()
+    if remove_punctuation:
+        text = _PUNCT_RE.sub("", text)
+    if lowercase:
+        text = text.lower()
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def load_splits(cfg: dict) -> DatasetDict:
+    """Load train/eval splits from a Hugging Face dataset name in the config."""
+    d = cfg["dataset"]
+    load_kwargs: dict[str, Any] = {}
+    if d.get("config"):
+        load_kwargs["name"] = d["config"]
+
+    raw = DatasetDict()
+    raw["train"] = load_dataset(d["name"], split=d["train_split"], **load_kwargs)
+    raw["eval"] = load_dataset(d["name"], split=d["eval_split"], **load_kwargs)
+
+    # Keep only the columns we need, renamed to canonical names.
+    for split in raw:
+        cols = raw[split].column_names
+        rename = {}
+        if d["audio_column"] != "audio":
+            rename[d["audio_column"]] = "audio"
+        if d["text_column"] != "text":
+            rename[d["text_column"]] = "text"
+        if rename:
+            raw[split] = raw[split].rename_columns(rename)
+        drop = [c for c in raw[split].column_names if c not in {"audio", "text"}]
+        raw[split] = raw[split].remove_columns(drop)
+
+    # Optional sub-sampling for quick smoke tests.
+    if d.get("max_train_samples"):
+        raw["train"] = raw["train"].select(range(int(d["max_train_samples"])))
+    if d.get("max_eval_samples"):
+        raw["eval"] = raw["eval"].select(range(int(d["max_eval_samples"])))
+
+    sr = cfg["preprocessing"]["sampling_rate"]
+    raw = raw.cast_column("audio", Audio(sampling_rate=sr))
+    return raw
+
+
+def build_prepare_fn(cfg: dict, feature_extractor, tokenizer):
+    """Return a map() function turning raw rows into model inputs + labels."""
+    pre = cfg["preprocessing"]
+    max_audio_samples = int(pre["max_audio_seconds"] * pre["sampling_rate"])
+
+    def prepare(batch: dict) -> dict:
+        audio = batch["audio"]
+        features = feature_extractor(
+            audio["array"], sampling_rate=audio["sampling_rate"]
+        )
+        batch["input_features"] = features.input_features[0]
+        batch["input_length"] = len(audio["array"])
+
+        text = _normalise_text(
+            batch["text"], pre["lowercase"], pre["remove_punctuation"]
+        )
+        batch["labels"] = tokenizer(text).input_ids
+        return batch
+
+    return prepare, max_audio_samples
+
+
+@dataclass
+class DataCollatorSpeechSeq2SeqWithPadding:
+    """Pads input features and label sequences independently."""
+
+    processor: Any
+    decoder_start_token_id: int
+
+    def __call__(self, features: list[dict]) -> dict[str, torch.Tensor]:
+        input_features = [{"input_features": f["input_features"]} for f in features]
+        batch = self.processor.feature_extractor.pad(
+            input_features, return_tensors="pt"
+        )
+
+        label_features = [{"input_ids": f["labels"]} for f in features]
+        labels_batch = self.processor.tokenizer.pad(
+            label_features, return_tensors="pt"
+        )
+        # Replace padding with -100 so it is ignored by the loss.
+        labels = labels_batch["input_ids"].masked_fill(
+            labels_batch.attention_mask.ne(1), -100
+        )
+        # If a BOS token was appended in tokenisation, strip it; the model adds it.
+        if (labels[:, 0] == self.decoder_start_token_id).all().cpu().item():
+            labels = labels[:, 1:]
+
+        batch["labels"] = labels
+        return batch

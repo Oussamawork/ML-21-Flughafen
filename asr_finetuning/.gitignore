@@ -1,0 +1,21 @@
+# Training artifacts and caches
+outputs/
+runs/
+wandb/
+*.ckpt
+*.pt
+*.bin
+*.safetensors
+
+# Datasets / audio
+data/
+*.wav
+*.mp3
+*.flac
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
