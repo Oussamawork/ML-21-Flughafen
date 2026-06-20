@@ -21,7 +21,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Agent tools + flight API | TDD-03 | ⚪ | Designed |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
-| Backend API (FastAPI) | TDD-06 | ⚪ | Designed |
+| Backend API (FastAPI) | TDD-06 | 🟡 | Skeleton built with offline stubs; 11 tests passing; awaiting real STT/agent/TTS |
 | Frontend (Next.js) | TDD-07 | ⚪ | Designed |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
@@ -87,6 +87,19 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - Linked it from the ASR README; ticked the notebook item in TDD-01.
 - Branch `feat/tdd-01-colab-notebook`. **Next:** run it on a T4 to get the
   base-vs-fine-tuned WER, then wire `WhisperTranscriber` into TDD-06.
+
+### Session 2026-06-20 (cont.) — TDD-06 backend skeleton
+- PR #5 (notebook) merged. Started backend on `feat/tdd-06-backend`.
+- Built FastAPI app: `/health`, `/airports`, `/transcribe`, `/chat`, `/speak`,
+  `/converse` (STT→agent→TTS + per-stage latency), `/audio/{id}`, `WS /ws/{id}`;
+  in-memory session store with TTL; CORS; OpenAPI docs.
+- STT/agent/TTS are interfaces with **offline stubs** so it runs with no GPU/keys:
+  stub STT returns a Darija sample, stub agent does intent + a mock flight tool
+  (SV624→gate B12), stub TTS returns a silent WAV. Real impls swap in per TDD.
+- `pytest`: **11 tests passing** (incl. full `/converse` + WebSocket).
+- Wired `WhisperSTT` adapter (lazy) for when `LOAD_STT=true` post-training.
+- **Next:** real Whisper once the checkpoint exists; then TDD-02 agent / TDD-07
+  frontend can consume this API.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
