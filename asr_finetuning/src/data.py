@@ -39,9 +39,7 @@ def _require_columns(dataset, audio_column: str, text_column: str, name: str) ->
 
 def _load_audio_array(audio: dict, target_sr: int):
     """Load a 1-D float waveform without datasets/torchcodec (works on Mac CPU)."""
-    if isinstance(audio.get("array"), (list, tuple)) or (
-        hasattr(audio.get("array"), "shape") and audio["array"] is not None
-    ):
+    if audio.get("array") is not None:
         arr = audio["array"]
         sr = int(audio.get("sampling_rate") or target_sr)
     elif audio.get("bytes"):

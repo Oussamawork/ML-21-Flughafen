@@ -94,7 +94,7 @@ Two configs are provided:
 | Dataset | `name` / `config` | Hours / size | Notes |
 |---|---|---|---|
 | **DODa audio** *(Darija — recommended)* | `atlasia/DODa-audio-dataset` | ~9h46m, 12,743 clips | Moroccan Darija from the published *Darija Open Dataset*. **Schema (confirmed on the Hub):** `train` split only; columns `audio` (16 kHz), `darija_Arab_new`/`darija_Arab_old` (Arabic script), `darija_Latn`, `english`. Preset uses `darija_Arab_new`. Gated — accept terms + login. Best aligned with the use case. |
-| **Common Voice (Arabic)** *(default)* | `mozilla-foundation/common_voice_17_0` / `ar` | large | **Broken with `datasets>=4`** (`EmptyDatasetError` — script loader removed). Pin `datasets<4` or use DODa/FLEURS for local runs. Mostly MSA — good baseline once loadable. |
+| **Common Voice (Arabic)** *(default)* | `mozilla-foundation/common_voice_17_0` / `ar` | large | Needs `datasets<4` (script loader removed in v4) — **pinned in `requirements.txt`**, so the default config loads. Mostly MSA — good baseline. |
 | **DVoice Darija** | `aioxlabs/dvoice-darija` | — | Darija ASR corpus (DVoice initiative); alternative Darija source. |
 | **Darija Wiki audio** | `atlasia/Moroccan-Darija-Wiki-Audio-Dataset` | 551 clips | Small, clean parallel set; useful for eval or augmentation. |
 | **FLEURS (Arabic)** | `google/fleurs` / `ar_eg` | — | Clean read MSA speech; handy baseline. |

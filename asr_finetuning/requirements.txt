@@ -3,7 +3,7 @@
 # build matching your CUDA version from https://pytorch.org.
 torch>=2.1
 transformers>=4.44
-datasets>=2.20
+datasets>=2.20,<4    # CV17 (default config) needs the script loader removed in datasets 4; DODa/FLEURS load either way
 accelerate>=0.33
 evaluate>=0.4
 jiwer>=3.0            # WER/CER backend for `evaluate`

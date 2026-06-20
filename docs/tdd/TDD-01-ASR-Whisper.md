@@ -54,8 +54,9 @@ Files (already in repo):
   the airport use case.
 - **Baseline / coverage:** Common Voice Arabic
   (`mozilla-foundation/common_voice_17_0`, config `ar`) — mostly MSA.
-  `config/default.yaml`. **Note:** CV17 currently fails with `datasets>=4`
-  (`EmptyDatasetError`); pin `datasets<4` or use FLEURS/DODa for local runs.
+  `config/default.yaml`. **Note:** CV17 needs the script loader removed in
+  `datasets>=4`; `requirements.txt` pins `datasets<4` so the default config loads.
+  DODa/FLEURS load on any datasets version.
 - **Alternatives:** `aioxlabs/dvoice-darija` (DVoice), 
   `atlasia/Moroccan-Darija-Wiki-Audio-Dataset` (small, clean — good for eval).
 - **Loader robustness:** datasets without an eval split auto-carve a `test_size`
