@@ -48,9 +48,9 @@ M5 Eval+Deploy. → Currently inside **M1**.
 ## 3. Open questions / to resolve
 
 - [x] ~~Verify a real **Darija ASR dataset**~~ → chose `atlasia/DODa-audio-dataset`
-      (DODa, ~9h46m), wired as `config/doda_darija.yaml`. Still need to confirm
-      exact column names/splits in the HF viewer (best guess `darija_ar`) before
-      a long training run.
+      (DODa, ~9h46m), wired as `config/doda_darija.yaml`. Schema confirmed on the
+      Hub: `train` split only; Arabic-script column `darija_Arab_new`. Eval set is
+      carved from train with a sentence-grouped split (no leakage). Dataset is gated.
 - [ ] LLM choice for the agent: GPT-4o-mini (default) vs Llama 3.1 via Groq.
 - [ ] Flight API provider that actually returns **gate/terminal** for AUH on free
       tier (else seed gates in KB for case-study flights).

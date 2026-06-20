@@ -76,8 +76,9 @@ python -m src.transcribe --model.name ./outputs/whisper-small-darija --audio cli
 The pipeline loads any Hugging Face audio dataset via `dataset.name` /
 `dataset.config`, mapping its audio + transcript columns to canonical names. If a
 dataset has no eval split, set `dataset.eval_split: null` and the loader carves a
-`test_size` validation set out of train. Missing columns fail fast with the list
-of available columns.
+`test_size` validation set out of train — split **by sentence**, so the same
+transcript never appears in both train and eval (avoids leaking parallel
+recordings). Missing columns fail fast with the list of available columns.
 
 Two configs are provided:
 - `config/default.yaml` — **Common Voice Arabic** baseline (reliable, mostly MSA).
@@ -85,17 +86,16 @@ Two configs are provided:
 
 | Dataset | `name` / `config` | Hours / size | Notes |
 |---|---|---|---|
-| **DODa audio** *(Darija — recommended)* | `atlasia/DODa-audio-dataset` | ~9h46m, 12,743 clips | Moroccan Darija from the published *Darija Open Dataset*; Arabic-script + Latin transcriptions. Use the Arabic-script column. Best aligned with the use case. |
+| **DODa audio** *(Darija — recommended)* | `atlasia/DODa-audio-dataset` | ~9h46m, 12,743 clips | Moroccan Darija from the published *Darija Open Dataset*. **Schema (confirmed on the Hub):** `train` split only; columns `audio` (16 kHz), `darija_Arab_new`/`darija_Arab_old` (Arabic script), `darija_Latn`, `english`. Preset uses `darija_Arab_new`. Gated — accept terms + login. Best aligned with the use case. |
 | **Common Voice (Arabic)** *(default)* | `mozilla-foundation/common_voice_17_0` / `ar` | large | Reliable, gated (accept terms + login). Mostly MSA — good for coverage/baseline. |
 | **DVoice Darija** | `aioxlabs/dvoice-darija` | — | Darija ASR corpus (DVoice initiative); alternative Darija source. |
 | **Darija Wiki audio** | `atlasia/Moroccan-Darija-Wiki-Audio-Dataset` | 551 clips | Small, clean parallel set; useful for eval or augmentation. |
 | **FLEURS (Arabic)** | `google/fleurs` / `ar_eg` | — | Clean read MSA speech; handy baseline. |
 
-> ⚠️ **Verify columns/splits on the HF Hub before a long training run.** Darija
-> sets vary: e.g. DODa's Arabic-script transcript column is wired as
-> `text_column: darija_ar` in the preset — confirm the exact name in the dataset
-> viewer and adjust if needed (the loader will print available columns on a
-> mismatch). For best coverage of code-mixed airport speech, mix a Darija set
+> ℹ️ **DODa's schema is confirmed** (see the table above); the preset is wired to
+> the real columns. For **other** Darija sets, verify columns/splits on the HF Hub
+> before a long run — they vary, and the loader prints available columns on a
+> mismatch. For best coverage of code-mixed airport speech, mix a Darija set
 > (DODa/DVoice) with Common Voice Arabic.
 
 For your own recordings, point `dataset.*` at a local manifest by loading it as a
