@@ -83,7 +83,8 @@ when implementing the matching TDD): `agent/` (TDD-02/03), `knowledge_base/`
 
 ## Git workflow
 
-- Work on branch `claude/professor-projects-analysis-t99iau`. Pushing to it
-  updates **PR #1** (already open) — do not open a new PR.
+- Work on branch `claude/professor-projects-analysis-t99iau`. **PR #1 (the
+  initial docs + ASR scaffold) has been merged into `main`.** Further pushes to
+  this branch open a new PR for the next batch of work — that is expected.
 - Commit when a unit of work is complete; push with
   `git push -u origin claude/professor-projects-analysis-t99iau`.
