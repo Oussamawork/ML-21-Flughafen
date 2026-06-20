@@ -16,7 +16,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Component | TDD | Status | Notes |
 |---|---|---|---|
 | System overview / architecture | TDD-00 | 🟢 | Design written |
-| STT — fine-tuned Whisper | TDD-01 | 🟡 | Pipeline built & config-tested; **not trained yet** |
+| STT — fine-tuned Whisper | TDD-01 | 🟡 | Pipeline built; DODa Darija dataset wired (`doda_darija.yaml`); **not trained yet** |
 | LLM agent (LangGraph) | TDD-02 | ⚪ | Designed |
 | Agent tools + flight API | TDD-03 | ⚪ | Designed |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
@@ -47,8 +47,10 @@ M5 Eval+Deploy. → Currently inside **M1**.
 
 ## 3. Open questions / to resolve
 
-- [ ] Verify a real **Darija ASR dataset** on the HF Hub; update
-      `asr_finetuning/config/default.yaml`.
+- [x] ~~Verify a real **Darija ASR dataset**~~ → chose `atlasia/DODa-audio-dataset`
+      (DODa, ~9h46m), wired as `config/doda_darija.yaml`. Schema confirmed on the
+      Hub: `train` split only; Arabic-script column `darija_Arab_new`. Eval set is
+      carved from train with a sentence-grouped split (no leakage). Dataset is gated.
 - [ ] LLM choice for the agent: GPT-4o-mini (default) vs Llama 3.1 via Groq.
 - [ ] Flight API provider that actually returns **gate/terminal** for AUH on free
       tier (else seed gates in KB for case-study flights).
@@ -66,6 +68,16 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - Wrote full TDD set `docs/tdd/TDD-00…09` + this progress log.
 - **Next session:** verify Darija dataset; run baseline + smoke test on a GPU
   (Colab/Kaggle); then start TDD-02 agent scaffold.
+
+### Session 2026-06-20 (cont.) — TDD-01 Darija dataset
+- Researched Darija ASR datasets on the HF Hub (PR #1, #2 already merged).
+- Chose **DODa** (`atlasia/DODa-audio-dataset`) as primary Darija set; added
+  `config/doda_darija.yaml`. Documented alternatives (DVoice, Darija-Wiki, FLEURS).
+- Hardened `data.load_splits`: auto-carve validation split when none exists;
+  fail-fast with available columns on a mismatch. Added `dataset.test_size`.
+- Updated ASR README, TDD-01, PROGRESS. Branch `feat/tdd-01-darija-dataset`.
+- **Next:** verify DODa column names/splits in the HF viewer, then baseline +
+  smoke test on a GPU.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

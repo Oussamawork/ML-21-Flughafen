@@ -16,7 +16,8 @@ dataset:
   name: mozilla-foundation/common_voice_17_0
   config: ar            # language/subset config (e.g. "ar" for Arabic)
   train_split: train
-  eval_split: test
+  eval_split: test      # null -> carve a validation set out of train (see test_size)
+  test_size: 0.1        # used only when eval_split is null/missing
   audio_column: audio   # column holding the audio (Audio feature)
   text_column: sentence # column holding the reference transcript
   # Optional caps for fast iteration / smoke tests (null = use full split).
