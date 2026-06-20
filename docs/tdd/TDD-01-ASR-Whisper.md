@@ -47,10 +47,19 @@ Files (already in repo):
 - `src/transcribe.py` — `WhisperTranscriber` inference helper.
 
 ### 3.3 Data strategy
-- **Default:** Common Voice Arabic (`mozilla-foundation/common_voice_17_0`, config
-  `ar`) — reliable, gated (accept terms + `huggingface-cli login`). Mostly MSA.
-- **Darija:** verify Darija ASR corpora on the HF Hub and mix with Common Voice
-  for code-mixed coverage. IDs/quality vary → confirm before training.
+- **Darija (primary):** `atlasia/DODa-audio-dataset` — ~9h46m / 12,743 parallel
+  clips from the published *Darija Open Dataset*, with Arabic-script + Latin
+  transcriptions. Wired as `config/doda_darija.yaml` (Arabic-script column). This
+  is the recommended fine-tuning set; best aligned with the airport use case.
+- **Baseline / coverage:** Common Voice Arabic
+  (`mozilla-foundation/common_voice_17_0`, config `ar`) — reliable, gated, mostly
+  MSA. `config/default.yaml`. Mixing DODa + CV-Arabic improves code-mixed coverage.
+- **Alternatives:** `aioxlabs/dvoice-darija` (DVoice), 
+  `atlasia/Moroccan-Darija-Wiki-Audio-Dataset` (small, clean — good for eval).
+- **Loader robustness:** datasets without an eval split auto-carve a `test_size`
+  validation set; missing columns fail fast listing available columns.
+- ⚠️ Exact column names/splits **must be verified on the HF Hub** before a long
+  run (DODa Arabic-script column wired as `darija_ar` — confirm in the viewer).
 - Optional text normalization (punctuation/casing) configurable.
 
 ### 3.4 Training defaults
@@ -99,7 +108,9 @@ GPU required for training (Colab/Kaggle); CPU is fine for inference of small mod
 
 - [x] Configurable fine-tuning pipeline
 - [x] Config-loader unit-tested
-- [ ] Select & verify dataset(s); update `config/default.yaml`
+- [x] Select Darija dataset (DODa) + add `config/doda_darija.yaml` preset
+- [x] Loader robustness: auto eval-split + fail-fast on missing columns
+- [ ] Verify DODa column names/splits in the HF viewer (confirm `darija_ar`)
 - [ ] Baseline WER/CER on un-tuned whisper-small
 - [ ] Smoke test on GPU (`scripts/smoke_test.sh`)
 - [ ] Full fine-tune (~4000 steps)
