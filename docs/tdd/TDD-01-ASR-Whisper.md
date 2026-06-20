@@ -115,8 +115,9 @@ GPU required for training (Colab/Kaggle); CPU is fine for inference of small mod
 - [x] Select Darija dataset (DODa) + add `config/doda_darija.yaml` preset
 - [x] Loader robustness: auto eval-split + fail-fast on missing columns
 - [x] Verify DODa column names/splits on the HF Hub (train-only; `darija_Arab_new`)
+- [x] Colab/Kaggle click-to-run notebook (`notebooks/finetune_whisper_colab.ipynb`)
 - [ ] Baseline WER/CER on un-tuned whisper-small
-- [ ] Smoke test on GPU (`scripts/smoke_test.sh`)
+- [ ] Smoke test on GPU (`scripts/smoke_test.sh` or the notebook)
 - [ ] Full fine-tune (~4000 steps)
 - [ ] Evaluate fine-tuned; record delta
 - [ ] (opt) Push checkpoint to HF Hub

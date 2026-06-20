@@ -79,6 +79,15 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - **Next:** verify DODa column names/splits in the HF viewer, then baseline +
   smoke test on a GPU.
 
+### Session 2026-06-20 (cont.) — TDD-01 training notebook
+- PR #4 merged. Added click-to-run Colab/Kaggle notebook
+  `asr_finetuning/notebooks/finetune_whisper_colab.ipynb` (GPU check → clone →
+  install → HF login → smoke test → baseline eval → fine-tune → eval → push to
+  Hub → listen test). Works in browser Colab and the VS Code Colab extension.
+- Linked it from the ASR README; ticked the notebook item in TDD-01.
+- Branch `feat/tdd-01-colab-notebook`. **Next:** run it on a T4 to get the
+  base-vs-fine-tuned WER, then wire `WhisperTranscriber` into TDD-06.
+
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
 - Did: ...
