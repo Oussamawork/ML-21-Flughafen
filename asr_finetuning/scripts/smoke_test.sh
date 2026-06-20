@@ -4,8 +4,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Use DODa (doda_darija.yaml), not default.yaml: Common Voice 17.0 does not
+# load with datasets>=4 (EmptyDatasetError — script-based loader removed).
 python -m src.train \
-  --config config/default.yaml \
+  --config config/doda_darija.yaml \
   --dataset.max_train_samples 32 \
   --dataset.max_eval_samples 16 \
   --training.max_steps 5 \

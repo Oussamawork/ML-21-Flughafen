@@ -53,14 +53,17 @@ Files (already in repo):
   Arabic-script column. This is the recommended fine-tuning set; best aligned with
   the airport use case.
 - **Baseline / coverage:** Common Voice Arabic
-  (`mozilla-foundation/common_voice_17_0`, config `ar`) — reliable, gated, mostly
-  MSA. `config/default.yaml`. Mixing DODa + CV-Arabic improves code-mixed coverage.
+  (`mozilla-foundation/common_voice_17_0`, config `ar`) — mostly MSA.
+  `config/default.yaml`. **Note:** CV17 currently fails with `datasets>=4`
+  (`EmptyDatasetError`); pin `datasets<4` or use FLEURS/DODa for local runs.
 - **Alternatives:** `aioxlabs/dvoice-darija` (DVoice), 
   `atlasia/Moroccan-Darija-Wiki-Audio-Dataset` (small, clean — good for eval).
 - **Loader robustness:** datasets without an eval split auto-carve a `test_size`
   validation set, **split by sentence** so the same transcript never lands in both
-  train and eval (DODa has parallel recordings); missing columns fail fast listing
-  available columns.
+  train and eval (DODa has parallel recordings); rows with null/blank transcripts
+  are dropped before the split (~22 in DODa); missing columns fail fast listing
+  available columns. Audio is loaded via soundfile/librosa (`decode=False`) so
+  the pipeline runs on Mac CPU without torchcodec/FFmpeg.
 - **DODa schema (confirmed on the Hub):** `train` split only; columns `audio`
   (16 kHz), `darija_Arab_new`/`darija_Arab_old`, `darija_Latn`, `english`. Dataset
   is gated — accept terms + `huggingface-cli login` before training.
@@ -116,8 +119,7 @@ GPU required for training (Colab/Kaggle); CPU is fine for inference of small mod
 - [x] Loader robustness: auto eval-split + fail-fast on missing columns
 - [x] Verify DODa column names/splits on the HF Hub (train-only; `darija_Arab_new`)
 - [x] Colab/Kaggle click-to-run notebook (`notebooks/finetune_whisper_colab.ipynb`)
-- [ ] Baseline WER/CER on un-tuned whisper-small
-- [ ] Smoke test on GPU (`scripts/smoke_test.sh` or the notebook)
+- [x] Smoke test passes locally (Mac CPU + DODa; `scripts/smoke_test.sh`)
 - [ ] Full fine-tune (~4000 steps)
 - [ ] Evaluate fine-tuned; record delta
 - [ ] (opt) Push checkpoint to HF Hub

@@ -1,10 +1,13 @@
 """Dataset loading, preprocessing, and the speech seq2seq data collator."""
 from __future__ import annotations
 
+import io
 import re
 from dataclasses import dataclass
 from typing import Any
 
+import librosa
+import soundfile as sf
 import torch
 from datasets import Audio, DatasetDict, load_dataset
 
@@ -32,6 +35,45 @@ def _require_columns(dataset, audio_column: str, text_column: str, name: str) ->
             f"Set dataset.audio_column / dataset.text_column to match — e.g. "
             f"DODa uses audio='audio', text='darija_Arab_new' (Arabic script)."
         )
+
+
+def _load_audio_array(audio: dict, target_sr: int):
+    """Load a 1-D float waveform without datasets/torchcodec (works on Mac CPU)."""
+    if isinstance(audio.get("array"), (list, tuple)) or (
+        hasattr(audio.get("array"), "shape") and audio["array"] is not None
+    ):
+        arr = audio["array"]
+        sr = int(audio.get("sampling_rate") or target_sr)
+    elif audio.get("bytes"):
+        arr, sr = sf.read(io.BytesIO(audio["bytes"]), dtype="float32")
+        if getattr(arr, "ndim", 1) > 1:
+            arr = arr.mean(axis=1)
+        sr = int(sr)
+    elif audio.get("path"):
+        arr, _ = librosa.load(audio["path"], sr=target_sr, mono=True)
+        return arr, target_sr
+    else:
+        raise ValueError(f"Cannot load audio from keys {list(audio.keys())}")
+
+    if sr != target_sr:
+        arr = librosa.resample(arr, orig_sr=sr, target_sr=target_sr)
+    return arr, target_sr
+
+
+def _drop_empty_transcripts(dataset, text_column: str, name: str):
+    """Remove rows with missing or blank transcripts (DODa has ~22 nulls)."""
+    before = len(dataset)
+
+    def keep(text) -> bool:
+        return text is not None and str(text).strip() != ""
+
+    filtered = dataset.filter(keep, input_columns=[text_column])
+    dropped = before - len(filtered)
+    if dropped:
+        print(
+            f"[data] Dropped {dropped} row(s) with empty '{text_column}' in {name}."
+        )
+    return filtered
 
 
 def _grouped_split(dataset, group_column: str, test_size: float, seed: int):
@@ -69,11 +111,15 @@ def load_splits(cfg: dict) -> DatasetDict:
 
     raw = DatasetDict()
     raw["train"] = load_dataset(d["name"], split=d["train_split"], **load_kwargs)
+    raw["train"] = _drop_empty_transcripts(raw["train"], d["text_column"], d["name"])
 
     eval_split = d.get("eval_split")
     if eval_split:
         try:
             raw["eval"] = load_dataset(d["name"], split=eval_split, **load_kwargs)
+            raw["eval"] = _drop_empty_transcripts(
+                raw["eval"], d["text_column"], d["name"]
+            )
         except (ValueError, KeyError):
             print(
                 f"[data] eval split '{eval_split}' not found in {d['name']}; "
@@ -110,7 +156,8 @@ def load_splits(cfg: dict) -> DatasetDict:
         raw["eval"] = raw["eval"].select(range(int(d["max_eval_samples"])))
 
     sr = cfg["preprocessing"]["sampling_rate"]
-    raw = raw.cast_column("audio", Audio(sampling_rate=sr))
+    # decode=False avoids torchcodec/FFmpeg; bytes are loaded in prepare() via soundfile.
+    raw = raw.cast_column("audio", Audio(sampling_rate=sr, decode=False))
     return raw
 
 
@@ -121,11 +168,10 @@ def build_prepare_fn(cfg: dict, feature_extractor, tokenizer):
 
     def prepare(batch: dict) -> dict:
         audio = batch["audio"]
-        features = feature_extractor(
-            audio["array"], sampling_rate=audio["sampling_rate"]
-        )
+        array, sampling_rate = _load_audio_array(audio, pre["sampling_rate"])
+        features = feature_extractor(array, sampling_rate=sampling_rate)
         batch["input_features"] = features.input_features[0]
-        batch["input_length"] = len(audio["array"])
+        batch["input_length"] = len(array)
 
         text = _normalise_text(
             batch["text"], pre["lowercase"], pre["remove_punctuation"]

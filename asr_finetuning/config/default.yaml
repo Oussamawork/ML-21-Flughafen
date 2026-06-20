@@ -13,6 +13,8 @@ dataset:
   # Any audio dataset on the Hugging Face Hub. Defaults to Common Voice Arabic,
   # which is reliable and gated (accept terms on the dataset page first, then
   # `huggingface-cli login`). See README for Darija-specific candidates.
+  # Common Voice 17.0 currently fails with datasets>=4 (EmptyDatasetError on Hub).
+  # Use config/doda_darija.yaml for local smoke tests, or pin datasets<4 for CV17.
   name: mozilla-foundation/common_voice_17_0
   config: ar            # language/subset config (e.g. "ar" for Arabic)
   train_split: train
