@@ -23,6 +23,30 @@ pipeline) is implemented so far. Most "components" below exist as designs, not c
   `TDD-0X-*.md` with a task checklist; follow the relevant one when building it.
 - `PROJECT_REQUIREMENTS.md` — the supervisor's grading requirements.
 
+## Consistency rule (non-negotiable)
+
+**Every decision or change must be propagated to ALL places that describe it, in
+the same change — never leave one source stale.** A fact (a chosen dataset, a
+column name, a hyperparameter, an API provider, a contract) is almost always
+written in more than one file. When you change it in one, grep for every other
+occurrence and update them too, before committing.
+
+Concretely, when a change touches any of these, check **all** the rows that apply:
+
+| If you change… | Also update… |
+|---|---|
+| Code behavior (`asr_finetuning/src/*`) | the module's `README.md`, the relevant `docs/tdd/TDD-0X-*.md`, and any config comment that describes it |
+| A config value/field (`config/*.yaml`) | the inline comment, `asr_finetuning/README.md`, and the owning TDD |
+| A dataset / model / provider choice | `docs/PROGRESS.md` (decisions + open questions), the owning TDD, `README.md`, and the config preset |
+| A component design or contract | its `TDD-0X`, `TDD-00` if cross-cutting, and `docs/tdd/README.md` status |
+| Anything notable this session | `docs/PROGRESS.md` session log + status table |
+| Branch contents (after a push) | the **PR description** — it is the canonical spec; rewrite it clean (audit trail goes in a PR comment) |
+
+**Procedure:** after any change, run a repo-wide grep for the old value
+(e.g. `grep -rn "<old-name>"`) to prove no stale copy survives — the way the
+`darija_ar → darija_Arab_new` rename was swept across README, TDD-01, and
+PROGRESS. "I updated the code but not the docs" is a defect, not a follow-up.
+
 ## Non-negotiable project constraint
 
 The supervisor requires an **owned/fine-tuned model, not just calls to a hosted
