@@ -1,0 +1,15 @@
+# Core fine-tuning stack (tested with Python 3.10/3.11).
+# On Colab/Kaggle, torch is preinstalled with CUDA; otherwise install the
+# build matching your CUDA version from https://pytorch.org.
+torch>=2.1
+transformers>=4.44
+datasets>=2.20
+accelerate>=0.33
+evaluate>=0.4
+jiwer>=3.0            # WER/CER backend for `evaluate`
+librosa>=0.10        # audio loading / resampling for inference
+soundfile>=0.12      # audio I/O backend
+PyYAML>=6.0
+tensorboard>=2.14
+# Needed for some gated HF datasets (e.g. Common Voice):
+huggingface_hub>=0.24

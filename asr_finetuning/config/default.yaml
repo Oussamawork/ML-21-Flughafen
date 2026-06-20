@@ -1,0 +1,58 @@
+# Default configuration for fine-tuning Whisper on Darija / Arabic speech.
+# Override any field on the command line, e.g.:
+#   python -m src.train --config config/default.yaml --model_name openai/whisper-small
+
+model:
+  # Base checkpoint to fine-tune. whisper-small fits on a single free T4 (16GB).
+  name: openai/whisper-small
+  # Whisper has no dedicated "Darija" token; Darija is transcribed under Arabic.
+  language: arabic
+  task: transcribe
+
+dataset:
+  # Any audio dataset on the Hugging Face Hub. Defaults to Common Voice Arabic,
+  # which is reliable and gated (accept terms on the dataset page first, then
+  # `huggingface-cli login`). See README for Darija-specific candidates.
+  name: mozilla-foundation/common_voice_17_0
+  config: ar            # language/subset config (e.g. "ar" for Arabic)
+  train_split: train
+  eval_split: test
+  audio_column: audio   # column holding the audio (Audio feature)
+  text_column: sentence # column holding the reference transcript
+  # Optional caps for fast iteration / smoke tests (null = use full split).
+  max_train_samples: null
+  max_eval_samples: null
+
+preprocessing:
+  sampling_rate: 16000  # Whisper expects 16 kHz mono
+  max_label_length: 225 # Whisper max target tokens
+  # Drop examples whose audio is longer than this (seconds) to bound memory.
+  max_audio_seconds: 30.0
+  lowercase: false
+  remove_punctuation: false
+
+training:
+  output_dir: ./outputs/whisper-small-darija
+  per_device_train_batch_size: 16
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 1
+  learning_rate: 1.0e-5
+  warmup_steps: 500
+  max_steps: 4000
+  gradient_checkpointing: true
+  fp16: true            # set false on CPU; use bf16 on Ampere+ if preferred
+  eval_strategy: steps
+  eval_steps: 500
+  save_steps: 500
+  logging_steps: 25
+  save_total_limit: 2
+  predict_with_generate: true
+  generation_max_length: 225
+  load_best_model_at_end: true
+  metric_for_best_model: wer
+  greater_is_better: false   # lower WER is better
+  report_to: tensorboard
+  seed: 42
+  num_workers: 2
+  push_to_hub: false
+  hub_model_id: null
