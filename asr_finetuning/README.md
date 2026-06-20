@@ -55,7 +55,7 @@ huggingface-cli login
 > call the `src.*` scripts below.
 
 ```bash
-# 0. Sanity check the pipeline (few samples, 5 steps)
+# 0. Sanity check the pipeline (few samples, 5 steps; uses DODa, not Common Voice)
 bash scripts/smoke_test.sh
 
 # 1a. Full fine-tune with defaults (whisper-small, Common Voice Arabic)
@@ -94,7 +94,7 @@ Two configs are provided:
 | Dataset | `name` / `config` | Hours / size | Notes |
 |---|---|---|---|
 | **DODa audio** *(Darija — recommended)* | `atlasia/DODa-audio-dataset` | ~9h46m, 12,743 clips | Moroccan Darija from the published *Darija Open Dataset*. **Schema (confirmed on the Hub):** `train` split only; columns `audio` (16 kHz), `darija_Arab_new`/`darija_Arab_old` (Arabic script), `darija_Latn`, `english`. Preset uses `darija_Arab_new`. Gated — accept terms + login. Best aligned with the use case. |
-| **Common Voice (Arabic)** *(default)* | `mozilla-foundation/common_voice_17_0` / `ar` | large | Reliable, gated (accept terms + login). Mostly MSA — good for coverage/baseline. |
+| **Common Voice (Arabic)** *(default)* | `mozilla-foundation/common_voice_17_0` / `ar` | large | Needs `datasets<4` (script loader removed in v4) — **pinned in `requirements.txt`**, so the default config loads. Mostly MSA — good baseline. |
 | **DVoice Darija** | `aioxlabs/dvoice-darija` | — | Darija ASR corpus (DVoice initiative); alternative Darija source. |
 | **Darija Wiki audio** | `atlasia/Moroccan-Darija-Wiki-Audio-Dataset` | 551 clips | Small, clean parallel set; useful for eval or augmentation. |
 | **FLEURS (Arabic)** | `google/fleurs` / `ar_eg` | — | Clean read MSA speech; handy baseline. |

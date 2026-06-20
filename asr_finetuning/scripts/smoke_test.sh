@@ -4,8 +4,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Use DODa (doda_darija.yaml): it's the primary Darija set and loads on any
+# datasets version. (The CV17 default needs datasets<4, pinned in requirements.txt.)
 python -m src.train \
-  --config config/default.yaml \
+  --config config/doda_darija.yaml \
   --dataset.max_train_samples 32 \
   --dataset.max_eval_samples 16 \
   --training.max_steps 5 \
