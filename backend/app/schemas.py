@@ -63,3 +63,32 @@ class ConverseResponse(BaseModel):
 class AirportsResponse(BaseModel):
     airports: list[str]
     default: str
+
+
+class FlightRequest(BaseModel):
+    flight_number: str = Field(..., min_length=2)
+    airport_id: str | None = None
+    position: str | None = None  # reserved for route (TDD-04 map)
+
+
+class FlightInfo(BaseModel):
+    flight_number: str
+    airline: str | None = None
+    status: str | None = None
+    direction: str | None = None  # departure | arrival | other
+    scheduled: str | None = None
+    estimated: str | None = None
+    actual: str | None = None
+    gate: str | None = None
+    terminal: str | None = None
+    baggage: str | None = None  # arrivals only (AirLabs arr_baggage)
+    delay_minutes: int | None = None
+    departure_airport: str | None = None
+    arrival_airport: str | None = None
+    aircraft: str | None = None
+    source: str
+
+
+class FlightResponse(BaseModel):
+    flight: FlightInfo
+    route: dict | None = None  # populated once the KB map lands (TDD-04)

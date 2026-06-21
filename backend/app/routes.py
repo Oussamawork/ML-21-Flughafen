@@ -18,12 +18,16 @@ from .schemas import (
     ChatRequest,
     ChatResponse,
     ConverseResponse,
+    FlightInfo,
+    FlightRequest,
+    FlightResponse,
     HealthResponse,
     SpeakRequest,
     ToolCall,
     TranscribeResponse,
 )
 from .services import audio_store
+from .services.flight import FlightUnavailable
 from .services.stt import AudioDecodeError
 from .sessions import store as session_store
 from .state import get_services
@@ -83,6 +87,23 @@ def airports() -> AirportsResponse:
     return AirportsResponse(
         airports=[settings.default_airport_id], default=settings.default_airport_id
     )
+
+
+@router.post("/flight", response_model=FlightResponse)
+def flight(req: FlightRequest) -> FlightResponse:
+    """Look up a flight by its (typed) number, scoped to airport_id (default AUH).
+
+    Powers the ticket-first dashboard. `route` is reserved for the KB map (TDD-04).
+    """
+    services = get_services()
+    airport_id = req.airport_id or settings.default_airport_id
+    try:
+        info = services.flight.get_flight(req.flight_number, airport_id)
+    except FlightUnavailable as exc:
+        raise HTTPException(status_code=503, detail=f"Flight data unavailable: {exc}")
+    if info is None:
+        raise HTTPException(status_code=404, detail="Flight not found.")
+    return FlightResponse(flight=FlightInfo(**info))
 
 
 @router.post("/transcribe", response_model=TranscribeResponse)

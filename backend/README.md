@@ -17,7 +17,10 @@ uvicorn app.main:app --reload      # http://127.0.0.1:8000/docs
 ```
 
 Configure via env (see `.env.example`): `AIRPORT_ID`, `LOAD_STT`,
-`WHISPER_MODEL`, `AGENT_BACKEND`, `TTS_PROVIDER`, `CORS_ORIGINS`, `SESSION_TTL`.
+`WHISPER_MODEL`, `AGENT_BACKEND`, `FLIGHT_API_PROVIDER` (`mock`|`airlabs`),
+`AIRLABS_API_KEY`, `FLIGHT_CACHE_TTL`, `TTS_PROVIDER`, `CORS_ORIGINS`,
+`SESSION_TTL`. Flight data defaults to `mock` so the API runs with no key; set
+`FLIGHT_API_PROVIDER=airlabs` + `AIRLABS_API_KEY` (server-side) for live lookups.
 
 ## Test
 
@@ -33,6 +36,7 @@ pytest                              # end-to-end tests against the stubs
 |---|---|---|---|
 | GET | `/health` | — | status + which backends are active |
 | GET | `/airports` | — | installed `airport_id`s (KB-driven later) |
+| POST | `/flight` | `{flight_number, airport_id?, position?}` | `{flight, route?}` — flight by number, scoped to airport (TDD-03) |
 | POST | `/transcribe` | multipart `audio` | `{text, language, session_id}` |
 | POST | `/chat` | `{text, session_id?, airport_id?, language?}` | `ChatResponse` |
 | POST | `/speak` | `{text, language}` | audio stream |

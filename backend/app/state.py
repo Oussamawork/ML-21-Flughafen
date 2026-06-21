@@ -7,6 +7,7 @@ them across requests rather than per-request.
 from __future__ import annotations
 
 from .services.agent import Agent, build_agent
+from .services.flight import FlightProvider, build_flight_provider
 from .services.stt import STT, build_stt
 from .services.tts import TTS, build_tts
 
@@ -15,11 +16,13 @@ class Services:
     stt: STT
     agent: Agent
     tts: TTS
+    flight: FlightProvider
 
     def __init__(self) -> None:
         self.stt = build_stt()
         self.agent = build_agent()
         self.tts = build_tts()
+        self.flight = build_flight_provider()
 
     @property
     def stt_loaded(self) -> bool:

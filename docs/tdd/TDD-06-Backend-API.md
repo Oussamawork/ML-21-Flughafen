@@ -113,9 +113,10 @@ LLM/TTS provider keys.
 - [x] Pydantic schemas + OpenAPI docs + CORS
 - [x] Offline stubs (STT/agent/TTS) + end-to-end tests (`pytest`, 14 passing)
 - [x] Swap stub STT → fine-tuned Whisper (`LOAD_STT=true` → `Amassu/whisper-small-darija`)
+- [x] `POST /flight` (ticket-first card; `route` reserved for TDD-04 map)
+- [x] AirLabs flight tool wired server-side; strip `request`/meta (key echo)
+- [ ] `GET /map` endpoint (after TDD-04 map data)
 - [ ] Add `flight_number`/`position` to `/chat` & `/converse`; default `airport_id=AUH`
-- [ ] `POST /flight` (ticket-first card + route) and `GET /map` endpoints
-- [ ] AirLabs flight tool wired server-side; strip `request`/meta (key echo) from responses
 - [ ] Swap stub agent → LangGraph (TDD-02) and stub TTS → provider (TDD-05)
 
 > **Implementation note:** STT/agent/TTS are interfaces in `app/services/` with

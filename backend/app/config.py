@@ -55,6 +55,18 @@ class Settings:
         default_factory=lambda: os.getenv("AGENT_BACKEND", "stub")
     )
 
+    # --- flight data (TDD-03) ---
+    # "mock" (default) = canned flights, no network/key. "airlabs" = real lookup.
+    flight_api_provider: str = field(
+        default_factory=lambda: os.getenv("FLIGHT_API_PROVIDER", "mock")
+    )
+    airlabs_api_key: str = field(
+        default_factory=lambda: os.getenv("AIRLABS_API_KEY", "")
+    )
+    flight_cache_ttl: int = field(
+        default_factory=lambda: int(os.getenv("FLIGHT_CACHE_TTL", "60"))
+    )
+
     # --- tts (TDD-05) ---
     # "stub" returns silent audio; real providers: "elevenlabs" / "azure".
     tts_provider: str = field(default_factory=lambda: os.getenv("TTS_PROVIDER", "stub"))
