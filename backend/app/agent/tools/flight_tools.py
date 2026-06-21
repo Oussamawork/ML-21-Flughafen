@@ -7,6 +7,7 @@ can degrade gracefully.
 
 from __future__ import annotations
 
+from ...config import settings
 from ...services.flight import (
     FlightProvider,
     FlightUnavailable,
@@ -26,8 +27,12 @@ FLIGHT_STATUS_SCHEMA = {
 FIND_GATE_SCHEMA = FLIGHT_STATUS_SCHEMA
 
 
-def flight_status(provider: FlightProvider, flight_number: str, airport_id: str) -> dict:
-    """Live status/gate/terminal/times for a flight. `{}` if not found."""
+def flight_status(provider: FlightProvider, flight_number: str, airport_id: str | None = None) -> dict:
+    """Live status/gate/terminal/times for a flight. `{}` if not found.
+
+    `airport_id` defaults to the configured airport — a hosted LLM may omit the
+    optional arg even though the schema lists it."""
+    airport_id = airport_id or settings.default_airport_id
     code = normalize_flight_number(flight_number)
     try:
         info = provider.get_flight(code, airport_id)
@@ -36,7 +41,7 @@ def flight_status(provider: FlightProvider, flight_number: str, airport_id: str)
     return info or {}
 
 
-def find_gate(provider: FlightProvider, flight_number: str, airport_id: str) -> dict:
+def find_gate(provider: FlightProvider, flight_number: str, airport_id: str | None = None) -> dict:
     """Gate + terminal subset of flight_status."""
     info = flight_status(provider, flight_number, airport_id)
     if not info:

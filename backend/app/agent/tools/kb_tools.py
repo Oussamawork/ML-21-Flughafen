@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from ...config import settings
 from ...kb import AirportNotFound, KnowledgeBase
 from . import ToolBadInput, ToolUnavailable
 
@@ -40,13 +41,16 @@ FAQ_SCHEMA = {
 }
 
 
+# airport_id defaults to the configured airport — a hosted LLM may omit the
+# optional arg even though each tool's schema lists it.
 def directions(
     kb: KnowledgeBase,
-    airport_id: str,
+    airport_id: str | None = None,
     to_node: str | None = None,
     gate: str | None = None,
     from_node: str | None = None,
 ) -> dict:
+    airport_id = airport_id or settings.default_airport_id
     try:
         return kb.directions(airport_id, to_node=to_node, gate=gate, from_node=from_node)
     except AirportNotFound as exc:
@@ -55,19 +59,21 @@ def directions(
 
 def find_service(
     kb: KnowledgeBase,
-    airport_id: str,
+    airport_id: str | None = None,
     service_type: str | None = None,
     near_zone: str | None = None,
 ) -> dict:
+    airport_id = airport_id or settings.default_airport_id
     try:
         return kb.find_service(airport_id, service_type, near_zone)
     except AirportNotFound as exc:
         raise ToolUnavailable(f"no knowledge base for airport {exc}") from exc
 
 
-def faq(kb: KnowledgeBase, airport_id: str, question: str | None = None, lang: str | None = None) -> dict:
+def faq(kb: KnowledgeBase, airport_id: str | None = None, question: str | None = None, lang: str | None = None) -> dict:
     if not question:
         raise ToolBadInput("faq requires a question")
+    airport_id = airport_id or settings.default_airport_id
     try:
         return kb.faq(airport_id, question, lang=lang)
     except AirportNotFound as exc:

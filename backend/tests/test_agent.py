@@ -133,6 +133,19 @@ def test_faq_tool():
     assert "baggage" in reply.answer.lower()
 
 
+def test_tools_default_airport_id_when_omitted():
+    # A hosted LLM may omit the optional airport_id arg; tools must not crash.
+    from app.agent.tools import flight_tools, kb_tools
+    from app.kb import build_knowledge_base
+
+    kb = build_knowledge_base()
+    assert flight_tools.find_gate(MockFlightProvider(), "SV624")["gate"] == "B12"
+    assert flight_tools.flight_status(MockFlightProvider(), "SV624")["gate"] == "B12"
+    assert kb_tools.directions(kb, gate="B12")["route"][-1] == "gate-b12"
+    assert "results" in kb_tools.find_service(kb, service_type="pharmacy")
+    assert "answer" in kb_tools.faq(kb, question="lost baggage")
+
+
 def test_directions_without_target_is_graceful():
     reply = make_agent().run("how do I get there?", "en", "AUH", [])
     assert reply.intent == "directions"
