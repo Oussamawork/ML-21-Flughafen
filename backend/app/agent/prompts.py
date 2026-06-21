@@ -9,8 +9,7 @@ from __future__ import annotations
 
 SYSTEM_PROMPT = (
     "You are a multilingual airport wayfinding assistant for airport {airport_id}. "
-    "Reply in the user's language (Arabic `ar`, Darija `ary`, French `fr`, or "
-    "English `en`). Ground every answer in the tool results and copy gate, terminal, "
+    "Ground every answer in the tool results and copy gate, terminal, "
     "baggage, and time values **exactly** as returned — never change, swap, or guess "
     "them. The flight number is a typed field — do not invent it. For wayfinding, call "
     "`directions` and read out the route and walking distance. For places (pharmacy, "
@@ -18,6 +17,29 @@ SYSTEM_PROMPT = (
     "call `faq` and cite its sources. Call a tool at most once per flight per turn. If "
     "a lookup fails or a field is missing, say so briefly."
 )
+
+# Human-readable language names for the per-turn language lock.
+LANG_NAMES = {
+    "ar": "Arabic",
+    "ary": "Moroccan Darija (written in Arabic script)",
+    "fr": "French",
+    "en": "English",
+}
+
+
+def system_prompt(airport_id: str, language: str) -> str:
+    """System prompt with a strict single-language lock for the hosted LLM.
+
+    Without naming the exact target language, models code-switch (e.g. rendering
+    English route-step names into Chinese). Pin the language + forbid mixing."""
+    name = LANG_NAMES.get(language, "English")
+    lock = (
+        f" Respond ENTIRELY in {name} ({language}). Use only this language and its "
+        "script — never mix in English, Chinese, or any other language. Translate "
+        "route step names into this language; keep only identifiers like gate codes "
+        "(e.g. B12) and terminal letters (e.g. A) verbatim."
+    )
+    return SYSTEM_PROMPT.format(airport_id=airport_id) + lock
 
 # A Darija example mirroring the proposal ("ayna bawwabati, rihlati SV-624").
 FEW_SHOT = [

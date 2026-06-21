@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from ..prompts import SYSTEM_PROMPT
+from ..prompts import system_prompt
 from .base import LLMResult, ToolCallReq, ToolSpec
 
 
@@ -22,8 +22,8 @@ class OpenAIProvider:
         self._client = OpenAI(api_key=api_key)
         self._model = model
 
-    def _to_openai_messages(self, messages: list[dict], airport_id: str) -> list[dict]:
-        out = [{"role": "system", "content": SYSTEM_PROMPT.format(airport_id=airport_id)}]
+    def _to_openai_messages(self, messages: list[dict], airport_id: str, language: str) -> list[dict]:
+        out = [{"role": "system", "content": system_prompt(airport_id, language)}]
         for m in messages:
             role = m.get("role")
             if role == "tool":
@@ -65,7 +65,7 @@ class OpenAIProvider:
         ]
         resp = self._client.chat.completions.create(
             model=self._model,
-            messages=self._to_openai_messages(messages, airport_id),
+            messages=self._to_openai_messages(messages, airport_id, language),
             tools=tool_defs or None,
             temperature=0,  # faithful to tool results; reduce hallucination
         )
