@@ -41,8 +41,10 @@ then chats by voice/text. Panels:
   **boarding** ← `estimated || scheduled`; status renders as plain text.
 - **Airport Map card** — fetches `POST /map` (TDD-04) and draws the **live route
   polyline** + distance/walk banner; nodes coloured by state (current=green,
-  target=red, on-route=blue); positions/zones come from the KB. `lib/map-seed.ts`
-  is kept only as the pre-fetch/offline fallback shell.
+  target=red, on-route=blue); positions/zones come from the KB. Routes to the
+  flight's gate by default, but **any node is clickable to re-route** (sends
+  `to_node`, overriding the gate) with a "Back to my gate" reset — so the passenger
+  can explore. `lib/map-seed.ts` is the pre-fetch/offline fallback shell.
 - **Airport Agent card** — chat (Passenger/SkyGuide lines) with a **mic button**
   (`MediaRecorder` → 16 kHz WAV → `/converse` → fine-tuned Whisper), typed
   `/chat`, a voice-over toggle + replay (`/speak`), and per-message RTL.
