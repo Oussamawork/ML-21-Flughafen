@@ -1,0 +1,108 @@
+"""Unit tests for the LangGraph agent (TDD-02), offline + mock flight provider.
+
+No network, no LLM key: the OfflineProvider is deterministic and the flight tool
+uses MockFlightProvider. Build agents directly to inject providers.
+"""
+
+from __future__ import annotations
+
+import sys
+
+import pytest
+
+from app.agent import build_langgraph_agent
+from app.agent.providers.base import LLMResult, ToolCallReq
+from app.schemas import ToolCall
+from app.services.flight import FlightUnavailable, MockFlightProvider
+
+
+def make_agent(flight_provider=None, llm_provider=None, max_hops=4):
+    return build_langgraph_agent(
+        flight_provider=flight_provider or MockFlightProvider(),
+        llm_provider=llm_provider,
+        max_hops=max_hops,
+    )
+
+
+def test_flight_code_calls_tool_and_answers():
+    reply = make_agent().run("where is my gate for flight SV-624?", None, "AUH", [])
+    assert reply.intent == "find_gate"
+    assert "B12" in reply.answer
+    call = reply.tool_trace[0]
+    assert call["tool"] == "flight_status"
+    assert call["args"]["flight_number"] == "SV624"
+    assert call["result"]["gate"] == "B12"
+
+
+def test_typed_flight_number_used_without_code_in_text():
+    # The dashboard passes the typed number; the question need not repeat it.
+    reply = make_agent().run("where is my gate?", "en", "AUH", [], flight_number="EK201")
+    assert reply.tool_trace[0]["args"]["flight_number"] == "EK201"
+    assert "A7" in reply.answer
+
+
+def test_unknown_flight():
+    reply = make_agent().run("status of flight ZZ999", None, "AUH", [])
+    assert reply.intent == "find_gate"
+    assert reply.tool_trace[0]["result"] == {}
+    assert "couldn't find" in reply.answer.lower()
+
+
+def test_no_flight_code_falls_back():
+    reply = make_agent().run("hello there", None, "AUH", [])
+    assert reply.intent == "smalltalk"
+    assert reply.tool_trace == []
+
+
+@pytest.mark.parametrize(
+    "text,lang",
+    [
+        ("أين بوابتي للرحلة SV624", "ar"),
+        ("où est ma porte pour le vol SV624", "fr"),
+        ("where is my gate for SV624", "en"),
+    ],
+)
+def test_language_matrix(text, lang):
+    reply = make_agent().run(text, None, "AUH", [])
+    assert reply.language == lang
+
+
+class _AlwaysToolProvider:
+    """A fake LLM that never stops asking for a tool — exercises the hop guard."""
+
+    def complete(self, **_kw) -> LLMResult:
+        return LLMResult(tool_calls=[ToolCallReq("flight_status", {"flight_number": "SV624", "airport_id": "AUH"})], intent="find_gate")
+
+
+def test_max_tool_hops_guard():
+    agent = make_agent(llm_provider=_AlwaysToolProvider(), max_hops=2)
+    reply = agent.run("loop please", "en", "AUH", [])
+    assert len(reply.tool_trace) <= 2
+    assert reply.answer  # still produced an answer (compose fallback)
+
+
+class _DownProvider(MockFlightProvider):
+    def get_flight(self, flight_number, airport_id):
+        raise FlightUnavailable("provider down")
+
+
+def test_flight_unavailable_degrades_gracefully():
+    reply = make_agent(flight_provider=_DownProvider()).run(
+        "gate for SV624", "en", "AUH", []
+    )
+    assert reply.tool_trace[0]["result"] == {"error": "provider down"}
+    assert reply.answer  # graceful, no exception
+
+
+def test_tool_trace_shape_constructs_toolcall():
+    reply = make_agent().run("gate for SV624", "en", "AUH", [])
+    for tc in reply.tool_trace:
+        assert set(tc) == {"tool", "args", "result"}
+        ToolCall(**tc)  # the route layer does this; must not raise
+
+
+def test_default_agent_imports_no_llm_sdk():
+    # The offline default must not pull in openai/groq (no network / no key).
+    make_agent()
+    assert "openai" not in sys.modules
+    assert "groq" not in sys.modules

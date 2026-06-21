@@ -99,7 +99,13 @@ export default function Page() {
       addAgent({ role: "Passenger", text });
       setThinking(true);
       try {
-        const res = await sendChat({ text, sessionId, language: toLang(language) });
+        const res = await sendChat({
+          text,
+          sessionId,
+          language: toLang(language),
+          flightNumber: flightNumber.trim() || undefined,
+          position,
+        });
         setSessionId(res.session_id);
         setPayload(res);
         addAgent({ role: "SkyGuide", text: res.answer, language: res.language });
@@ -115,14 +121,19 @@ export default function Page() {
         setThinking(false);
       }
     },
-    [addAgent, sessionId, language, autoSpeak],
+    [addAgent, sessionId, language, autoSpeak, flightNumber, position],
   );
 
   const onAudio = useCallback(
     async (audio: Blob) => {
       setThinking(true);
       try {
-        const res = await converse({ audio, sessionId });
+        const res = await converse({
+          audio,
+          sessionId,
+          flightNumber: flightNumber.trim() || undefined,
+          position,
+        });
         setSessionId(res.session_id);
         setPayload(res);
         addAgent({ role: "Passenger", text: res.text_in, language: res.language });
@@ -135,7 +146,7 @@ export default function Page() {
         setThinking(false);
       }
     },
-    [addAgent, sessionId, autoSpeak],
+    [addAgent, sessionId, autoSpeak, flightNumber, position],
   );
 
   const onReplay = useCallback(async () => {

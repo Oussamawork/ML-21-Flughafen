@@ -103,6 +103,7 @@ then chats by voice/text. Panels:
       (`lib/map-seed.ts`); current position highlighted
 - [x] **Structured API Output card** (API proof — last payload)
 - [ ] **Live map route** — distance/walk banner + clickable re-route, from `/map` (TDD-04)
-- [ ] Wire the agent card to the real LangGraph agent once TDD-02 lands
+- [x] Agent card talks to the real LangGraph agent (TDD-02); sends the ticket-strip
+      `flight_number`/`position` to `/chat` & `/converse` so chat grounds without repeating the code
 - [ ] (v2) WebSocket streaming mode
 - [ ] Polish for the demo video once real agent/TTS are wired

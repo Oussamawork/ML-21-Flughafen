@@ -48,6 +48,25 @@ def test_chat_detects_flight_and_gate():
     assert "agent" in body["latency_ms"]
 
 
+def test_chat_uses_typed_flight_number():
+    # The dashboard sends the ticket-strip number; the question need not repeat it.
+    with TestClient(app) as c:
+        r = c.post("/chat", json={"text": "where is my gate?", "flight_number": "SV624"})
+    body = r.json()
+    assert body["intent"] == "find_gate"
+    assert "B12" in body["answer"]
+    assert body["tool_trace"][0]["args"]["flight_number"] == "SV624"
+
+
+def test_chat_remembers_flight_number_across_turns():
+    # Once set, the typed number persists on the session for later turns.
+    with TestClient(app) as c:
+        first = c.post("/chat", json={"text": "gate?", "flight_number": "SV624"}).json()
+        sid = first["session_id"]
+        second = c.post("/chat", json={"text": "and the terminal?", "session_id": sid}).json()
+    assert second["tool_trace"][0]["args"]["flight_number"] == "SV624"
+
+
 def test_chat_unknown_flight():
     with TestClient(app) as c:
         r = c.post("/chat", json={"text": "status of flight ZZ999"})

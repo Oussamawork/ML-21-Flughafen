@@ -20,9 +20,10 @@ class Services:
 
     def __init__(self) -> None:
         self.stt = build_stt()
-        self.agent = build_agent()
-        self.tts = build_tts()
+        # Build flight before the agent so the agent shares the same provider.
         self.flight = build_flight_provider()
+        self.agent = build_agent(flight_provider=self.flight)
+        self.tts = build_tts()
 
     @property
     def stt_loaded(self) -> bool:

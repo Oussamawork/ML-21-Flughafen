@@ -1,7 +1,7 @@
 # TDD-02 — LLM Agent (Agentic Orchestration)
 
-**Component:** `agent/`
-**Status:** ⚪ Not started
+**Component:** `backend/app/agent/`
+**Status:** 🟡 In progress — LangGraph graph + LLM-provider interface (offline default) + flight tools wired & default-on; KB tools + hosted-LLM verification pending
 **Depends on:** TDD-03 (tools), TDD-04 (RAG) · **Consumed by:** TDD-06 (`/chat`)
 
 ---
@@ -22,9 +22,15 @@ tool/RAG results, and produces a contextual reply **in the passenger's language*
 
 ### 3.1 Framework
 - **LangGraph** for an explicit, inspectable state graph (preferred over a plain
-  ReAct loop because the tool trace is needed for evaluation/debugging).
-- **LLM:** GPT-4o-mini (default) via API, with a config switch to Llama 3.1 via
-  Groq. Selected by env var `LLM_PROVIDER`.
+  ReAct loop because the tool trace is needed for evaluation/debugging). Lives in
+  `backend/app/agent/` (subpackage under `app.` — the documented `agent/` dir name;
+  kept in-package so the backend imports it cleanly).
+- **LLM behind a provider interface** (`LLMProvider.complete`), selected by
+  `LLM_PROVIDER`: **`offline` (default)** is deterministic and **needs no API key**
+  (keeps the pipeline runnable offline); `openai` (GPT-4o-mini) and `groq`
+  (Llama 3.1) are lazy-imported and used once a key is wired. The model is a config
+  choice made later — the graph/tools are model-agnostic.
+- Enabled by default: `AGENT_BACKEND=langgraph` (fallback `stub`).
 
 ### 3.2 Graph
 ```
@@ -115,9 +121,15 @@ def run_agent(text: str, session_id: str, airport_id: str = "AUH",
 
 ## 7. Task checklist
 
-- [ ] Scaffold `agent/` package + config (LLM provider switch)
-- [ ] Implement LangGraph graph + state
-- [ ] System prompt + few-shot (incl. Darija)
-- [ ] Wire tools (TDD-03) and RAG (TDD-04)
-- [ ] `run_agent` interface + unit tests with mocked tools
+- [x] Scaffold `backend/app/agent/` package + config (`LLM_PROVIDER`/`LLM_MODEL`/`MAX_TOOL_HOPS`)
+- [x] LangGraph graph + state (`detect_lang → agent_llm → tools* → compose`, hop cap)
+- [x] LLM-provider interface: `OfflineProvider` (default, no key) + lazy `OpenAI`/`Groq`
+- [x] System prompt + few-shot (incl. Darija) + multilingual answer templates
+- [x] Wire flight tools (TDD-03 `flight_status`/`find_gate`); graceful `ToolUnavailable`
+- [x] `Agent.run` integration (kept the backend Protocol) + 11 unit tests (mock tools, offline)
+- [x] Default-on (`AGENT_BACKEND=langgraph`); existing API tests pass unchanged; live-verified
+- [ ] Wire RAG/KB tools (`find_service`/`directions`/`faq`) with TDD-04
+- [ ] Verify hosted LLM path (OpenAI/Groq) once a key is wired; pick the model
+- [x] Thread typed `flight_number`/`position` from the dashboard → `/chat` & `/converse`
+      → agent (ticket-strip number grounds answers without repeating the code)
 - [ ] (stretch) fine-tuned intent classifier

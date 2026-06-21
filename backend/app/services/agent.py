@@ -72,13 +72,27 @@ class AgentReply:
 
 class Agent(Protocol):
     def run(
-        self, text: str, language: str | None, airport_id: str, history: list[dict]
+        self,
+        text: str,
+        language: str | None,
+        airport_id: str,
+        history: list[dict],
+        *,
+        flight_number: str | None = None,
+        position: str | None = None,
     ) -> AgentReply: ...
 
 
 class StubAgent:
     def run(
-        self, text: str, language: str | None, airport_id: str, history: list[dict]
+        self,
+        text: str,
+        language: str | None,
+        airport_id: str,
+        history: list[dict],
+        *,
+        flight_number: str | None = None,
+        position: str | None = None,
     ) -> AgentReply:
         lang = language or detect_language(text)
         tmpl = lambda key: _TEMPLATES[key].get(lang, _TEMPLATES[key]["en"])  # noqa: E731
@@ -100,6 +114,13 @@ class StubAgent:
         return AgentReply(tmpl("fallback"), lang, "smalltalk", [])
 
 
-def build_agent() -> Agent:
-    # Only the stub exists today; AGENT_BACKEND reserved for "langgraph" (TDD-02).
-    return StubAgent()
+def build_agent(flight_provider=None) -> Agent:
+    """Pick the agent backend. LangGraph is always used unless AGENT_BACKEND is
+    explicitly set to "stub" — so an unset/typo'd value never silently downgrades."""
+    from ..config import settings
+
+    if settings.agent_backend == "stub":
+        return StubAgent()
+    from ..agent import build_langgraph_agent  # lazy: pulls in langgraph
+
+    return build_langgraph_agent(flight_provider=flight_provider)

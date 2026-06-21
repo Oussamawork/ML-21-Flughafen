@@ -46,10 +46,24 @@ def _timed(bucket: dict[str, float], name: str):
         bucket[name] = round((time.perf_counter() - start) * 1000, 1)
 
 
-def _run_agent_turn(text: str, session, language: str | None) -> ChatResponse:
-    """Shared agent step used by /chat, /converse and the WebSocket."""
+def _run_agent_turn(
+    text: str,
+    session,
+    language: str | None,
+    flight_number: str | None = None,
+    position: str | None = None,
+) -> ChatResponse:
+    """Shared agent step used by /chat, /converse and the WebSocket.
+
+    Typed `flight_number`/`position` (from the dashboard) are remembered on the
+    session so later turns — including voice — stay grounded without resending.
+    """
     services = get_services()
     latency: dict[str, float] = {}
+    if flight_number:
+        session.flight_number = flight_number
+    if position:
+        session.position = position
     session.add("user", text)
     with _timed(latency, "agent"):
         reply = services.agent.run(
@@ -57,6 +71,8 @@ def _run_agent_turn(text: str, session, language: str | None) -> ChatResponse:
             language=language or session.language,
             airport_id=session.airport_id,
             history=session.messages,
+            flight_number=session.flight_number,
+            position=session.position,
         )
     session.language = reply.language
     session.add("assistant", reply.answer)
@@ -129,7 +145,9 @@ async def transcribe(
 @router.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest) -> ChatResponse:
     session = session_store.get_or_create(req.session_id, req.airport_id)
-    return _run_agent_turn(req.text, session, req.language)
+    return _run_agent_turn(
+        req.text, session, req.language, req.flight_number, req.position
+    )
 
 
 @router.post("/speak")
@@ -141,7 +159,10 @@ def speak(req: SpeakRequest) -> Response:
 
 @router.post("/converse", response_model=ConverseResponse)
 async def converse(
-    audio: UploadFile = File(...), session_id: str | None = Form(default=None)
+    audio: UploadFile = File(...),
+    session_id: str | None = Form(default=None),
+    flight_number: str | None = Form(default=None),
+    position: str | None = Form(default=None),
 ) -> ConverseResponse:
     """One-shot voice pipeline: STT -> agent -> TTS, with per-stage timings."""
     services = get_services()
@@ -158,7 +179,7 @@ async def converse(
         raise HTTPException(status_code=400, detail=f"Could not decode audio: {exc}")
 
     session = session_store.get_or_create(session_id)
-    chat_resp = _run_agent_turn(text_in, session, language)
+    chat_resp = _run_agent_turn(text_in, session, language, flight_number, position)
     latency.update(chat_resp.latency_ms)
 
     with _timed(latency, "tts"):
@@ -208,7 +229,10 @@ async def ws(websocket: WebSocket, session_id: str) -> None:
                 await websocket.send_json({"type": "error", "detail": "unknown type"})
                 continue
 
-            resp = _run_agent_turn(text, session, msg.get("language"))
+            resp = _run_agent_turn(
+                text, session, msg.get("language"),
+                msg.get("flight_number"), msg.get("position"),
+            )
             await websocket.send_json({"type": "answer", **resp.model_dump()})
     except WebSocketDisconnect:
         return  # normal client disconnect ends the loop

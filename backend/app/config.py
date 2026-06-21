@@ -56,10 +56,23 @@ class Settings:
     )
 
     # --- agent (TDD-02) ---
-    # "stub" until the LangGraph agent lands; then "langgraph".
+    # "langgraph" = the LangGraph agent (default); "stub" = rule-based fallback.
     agent_backend: str = field(
-        default_factory=lambda: os.getenv("AGENT_BACKEND", "stub")
+        default_factory=lambda: os.getenv("AGENT_BACKEND", "langgraph")
     )
+    # LLM behind a provider interface. "offline" (default) is deterministic and
+    # needs no key; "openai"/"groq" are lazy-imported when selected + a key is set.
+    llm_provider: str = field(
+        default_factory=lambda: os.getenv("LLM_PROVIDER", "offline")
+    )
+    llm_model: str = field(
+        default_factory=lambda: os.getenv("LLM_MODEL", "gpt-4o-mini")
+    )
+    max_tool_hops: int = field(
+        default_factory=lambda: int(os.getenv("MAX_TOOL_HOPS", "4"))
+    )
+    openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
+    groq_api_key: str = field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""))
 
     # --- flight data (TDD-03) ---
     # "mock" (default) = canned flights, no network/key. "airlabs" = real lookup.

@@ -17,8 +17,8 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 |---|---|---|---|
 | System overview / architecture | TDD-00 | 🟢 | Design written |
 | STT — fine-tuned Whisper | TDD-01 | 🟢 | **Fine-tuned: WER 108→28.8%, CER 64→9.6%** (DODa); pushed to `Amassu/whisper-small-darija`; wired into TDD-06 backend (`LOAD_STT=true`) |
-| LLM agent (LangGraph) | TDD-02 | ⚪ | Designed |
-| Agent tools + flight API | TDD-03 | 🟡 | AirLabs flight provider + `/flight` built (mock default; live-verified); KB tools (services/directions/faq) pending |
+| LLM agent (LangGraph) | TDD-02 | 🟡 | **LangGraph agent built + default-on** (`AGENT_BACKEND=langgraph`); LLM behind a provider interface, **offline default (no key)**; calls the flight tool; 11 tests; live-verified. RAG/KB tools + hosted-LLM pending |
+| Agent tools + flight API | TDD-03 | 🟡 | AirLabs flight provider + `/flight` (mock default; live-verified); **`flight_status`/`find_gate` now exposed as agent tools**; KB tools (services/directions/faq) pending |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
 | Backend API (FastAPI) | TDD-06 | 🟡 | Fine-tuned Whisper STT on by default (`LOAD_STT=true`); `/health` exposes `stt_loaded` + `whisper_model`; agent/TTS still stubs; 14 tests passing |
@@ -27,7 +27,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
 
 **Milestones:** M1 Speech-in · M2 Brain · M3 Knowledge · M4 Speech-out+UI ·
-M5 Eval+Deploy. → Currently inside **M1**.
+M5 Eval+Deploy. → Now in **M2** (LangGraph agent built; RAG/KB next).
 
 ## 2. Key decisions (chronological)
 
@@ -81,7 +81,10 @@ M5 Eval+Deploy. → Currently inside **M1**.
       (DODa, ~9h46m), wired as `config/doda_darija.yaml`. Schema confirmed on the
       Hub: `train` split only; Arabic-script column `darija_Arab_new`. Eval set is
       carved from train with a sentence-grouped split (no leakage). Dataset is gated.
-- [ ] LLM choice for the agent: GPT-4o-mini (default) vs Llama 3.1 via Groq.
+- [x] ~~LLM choice for the agent: GPT-4o-mini vs Llama 3.1 via Groq~~ → **deferred
+      via a provider interface** (`LLM_PROVIDER`): default **`offline`** (deterministic,
+      no key) so the agent runs key-free; `openai` (GPT-4o-mini) / `groq` (Llama 3.1)
+      are lazy-imported, model picked when a key is wired. Whisper stays the owned model.
 - [x] ~~Flight API provider that returns **gate/terminal** for AUH on free tier~~ →
       **AirLabs** confirmed: `dep_terminal` ~98%, `dep_gate` ~89% on live AUH
       departures, free tier 1,000 req/month. **No check-in field** → source it from
@@ -251,6 +254,46 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - **`GET /health`** returns `whisper_model` when the real STT is active — confirms
   `Amassu/whisper-small-darija` (or a local ckpt) is loaded.
 - Tests keep stub STT via `tests/conftest.py` (`LOAD_STT=false`).
+
+### Session 2026-06-21 (cont.) — TDD-02 LangGraph agent (M1 → M2)
+- Chose to build the **agent** next so the dashboard chat stops being a stub. Built
+  the real **LangGraph agent** in `backend/app/agent/` (graph: `detect_lang →
+  agent_llm → tools* → compose`, `MAX_TOOL_HOPS=4`), replacing `StubAgent` behind
+  the existing `Agent` Protocol (`build_agent()` dispatches on `AGENT_BACKEND`).
+- **LLM behind a provider interface** (`LLMProvider.complete`), per the user's
+  "decide the model later" call: default **`OfflineProvider`** is deterministic and
+  **needs no key** (detects flight code → calls the flight tool → templated
+  multilingual answer); `OpenAIProvider`/`GroqProvider` are lazy-imported for when a
+  key is wired (`LLM_PROVIDER` switch). Config: `LLM_PROVIDER`/`LLM_MODEL`/`MAX_TOOL_HOPS`.
+- **Flight tools** (`flight_status`/`find_gate`, TDD-03) wrap the real `FlightProvider`
+  (agent + `/flight` now share one provider via `state.py` injection); `FlightUnavailable`
+  degrades gracefully (never crashes the turn).
+- **Default flipped to `langgraph`** (offline) in config + `.env.example`. Verified:
+  existing 25 API tests pass **unchanged**, + 11 new `tests/test_agent.py` (36 total);
+  live `/chat "where is my gate for SV624?"` → grounded answer + `tool_trace`,
+  `/health` shows `agent_backend=langgraph`. `langgraph` 1.2.6 installs on Python 3.14.
+- **Pre-wired** optional `flight_number`/`position` on `Agent.run`/`AgentState` so
+  threading the dashboard's typed flight number through `/chat` later (TDD-06/07) is
+  pure plumbing. Branch `feat/tdd-02-agent` (off `main`).
+- **Next:** RAG/KB tools + `/map` (TDD-04); wire a real LLM key to pick the model.
+
+### Session 2026-06-21 (cont.) — verified agent on Groq + wired typed flight number
+- **Tested the agent with a real LLM (free):** GPT isn't free, so used **Groq** (Llama
+  3.3 70B) via the provider interface (`LLM_PROVIDER=groq`, free key in gitignored
+  `.env`). Found + fixed a real bug in the hosted path: it **looped tool calls then
+  hallucinated** — corrected the tool-call protocol (assistant `tool_calls` + linked
+  `tool_call_id` messages), set `temperature=0`, hardened the prompt. Faithful EN/FR
+  answers verified live in the dashboard (commit `415e10f`).
+- **Whisper decode fix** (`transcribe.py`): `clean_up_tokenization_spaces=False` to
+  preserve Arabic/French spacing + silence the BPE warning (commit `35d0907`).
+- **Wired the ticket-strip flight number into `/chat` & `/converse`:** `ChatRequest`
+  + `converse` form fields gain `flight_number`/`position`; persisted on the
+  `Session` (so voice turns stay grounded); `_run_agent_turn` passes them to the
+  agent. Frontend (`api.ts`, `page.tsx`) sends the ticket-strip number on ask + mic.
+  Now "where is my gate?" (no code) → grounded answer. 38 backend tests; FE build green.
+- **Browser-verified** end-to-end on Groq: asked without the code → "Your gate is
+  B12, in terminal A." `main` now has the SkyGuide frontend, so this branch carries it too.
+- **Next:** TDD-04 (KB + RAG tools + `/map`), then pick the production LLM/model.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
