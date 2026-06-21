@@ -14,7 +14,7 @@ def test_map_layout_only():
     body = r.json()
     assert body["airport_id"] == "AUH"
     assert "concourse-b" in body["nodes"]
-    assert body["positions"]["entrance"] == {"x": 7, "y": 55}
+    assert body["positions"]["entrance"] == {"x": 38, "y": 35}
     assert body["zones"]  # labelled rectangles present
     assert body["route"] == []  # no target -> shell only
 

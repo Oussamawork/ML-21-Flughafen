@@ -15,16 +15,17 @@ nodes:
   concourse-c: Concourse C
   concourse-d: Concourse D
 
+# % coords over the real airportmaps.com AUH map image (frontend backdrop).
 positions:
-  entrance: {x: 7, y: 55}
-  check-in: {x: 20, y: 55}
-  security: {x: 33, y: 55}
-  duty-free: {x: 47, y: 55}
-  baggage: {x: 33, y: 26}
-  concourse-a: {x: 73, y: 20}
-  concourse-b: {x: 85, y: 42}
-  concourse-c: {x: 85, y: 66}
-  concourse-d: {x: 73, y: 88}
+  entrance: {x: 38, y: 35}     # landside: pick-up/drop-off
+  check-in: {x: 45, y: 40}
+  security: {x: 50, y: 43}     # central processor hub
+  duty-free: {x: 54, y: 46}
+  baggage: {x: 49, y: 51}
+  concourse-a: {x: 20, y: 55}  # Gates A (lower-left arm)
+  concourse-b: {x: 58, y: 79}  # Gates B (bottom arm)
+  concourse-c: {x: 84, y: 47}  # Gates C (right arm)
+  concourse-d: {x: 45, y: 11}  # Gates D (top arm)
 
 # Undirected edges with walking distance in metres (loader makes them symmetric).
 edges:

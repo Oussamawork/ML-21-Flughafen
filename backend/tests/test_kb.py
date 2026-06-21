@@ -34,7 +34,7 @@ def test_directions_resolves_gate_code_to_concourse(kb):
     d = kb.directions("AUH", gate="B12")
     assert d["route"][-1] == "concourse-b"
     assert d["route_summary"]["walking_time_min"] >= 1
-    assert d["positions"]["concourse-b"] == {"x": 85, "y": 42}
+    assert d["positions"]["concourse-b"] == {"x": 58, "y": 79}
     # A real AirLabs-style gate resolves by its leading letter too.
     assert kb.directions("AUH", gate="C33")["route"][-1] == "concourse-c"
     assert kb.directions("AUH", gate="A1")["route"][-1] == "concourse-a"

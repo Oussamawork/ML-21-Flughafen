@@ -2,12 +2,17 @@
 
 // Mirrors SkyGuide's .ticket-strip (flight no · Language · "I am here" · Load).
 export type UiLanguage = "en" | "fr" | "darija";
+// Layout nodes a passenger can stand at (mirrors backend/app/kb/data/AUH/layout.yaml).
 export type Position =
   | "entrance"
   | "check-in"
   | "security"
   | "duty-free"
-  | "pharmacy";
+  | "baggage"
+  | "concourse-a"
+  | "concourse-b"
+  | "concourse-c"
+  | "concourse-d";
 
 interface Props {
   flightNumber: string;
@@ -68,8 +73,12 @@ export function TicketStrip({
           <option value="entrance">Main entrance</option>
           <option value="check-in">Check-in hall</option>
           <option value="security">Security control</option>
-          <option value="duty-free">Duty free area</option>
-          <option value="pharmacy">Airport pharmacy</option>
+          <option value="duty-free">Duty free plaza</option>
+          <option value="baggage">Baggage reclaim</option>
+          <option value="concourse-a">Concourse A</option>
+          <option value="concourse-b">Concourse B</option>
+          <option value="concourse-c">Concourse C</option>
+          <option value="concourse-d">Concourse D</option>
         </select>
       </label>
       <button

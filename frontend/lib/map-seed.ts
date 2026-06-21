@@ -7,16 +7,17 @@ export interface Point {
   y: number;
 }
 
+// % coords over the real AUH map backdrop (mirrors layout.yaml positions).
 export const NODE_POSITIONS: Record<string, Point> = {
-  entrance: { x: 7, y: 55 },
-  "check-in": { x: 20, y: 55 },
-  security: { x: 33, y: 55 },
-  "duty-free": { x: 47, y: 55 },
-  baggage: { x: 33, y: 26 },
-  "concourse-a": { x: 73, y: 20 },
-  "concourse-b": { x: 85, y: 42 },
-  "concourse-c": { x: 85, y: 66 },
-  "concourse-d": { x: 73, y: 88 },
+  entrance: { x: 38, y: 35 },
+  "check-in": { x: 45, y: 40 },
+  security: { x: 50, y: 43 },
+  "duty-free": { x: 54, y: 46 },
+  baggage: { x: 49, y: 51 },
+  "concourse-a": { x: 20, y: 55 },
+  "concourse-b": { x: 58, y: 79 },
+  "concourse-c": { x: 84, y: 47 },
+  "concourse-d": { x: 45, y: 11 },
 };
 
 // Zone boxes (mirror layout.yaml zones): %-based layout.
