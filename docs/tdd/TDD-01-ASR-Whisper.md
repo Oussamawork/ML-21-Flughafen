@@ -1,7 +1,7 @@
 # TDD-01 — Speech-to-Text: Fine-Tuned Whisper (Darija/Arabic)
 
 **Component:** `asr_finetuning/` + STT serving glue
-**Status:** 🟢 Pipeline built · ⚪ Not yet trained
+**Status:** 🟢 Pipeline built · 🟢 Fine-tuned (WER 108.18%→28.79% on DODa) · model on HF Hub (`Amassu/whisper-small-darija`) · ⚪ backend wiring pending
 **Depends on:** none (upstream of the agent) · **Consumed by:** TDD-06 (`/transcribe`)
 
 > This TDD formalizes `../PLAN_ASR_Whisper.md`. It is the project's **owned ML

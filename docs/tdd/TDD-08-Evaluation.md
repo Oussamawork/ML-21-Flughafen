@@ -1,7 +1,7 @@
 # TDD-08 — Evaluation & Testing
 
 **Component:** `evaluation/`
-**Status:** ⚪ Not started
+**Status:** 🟡 In progress — ASR result recorded (WER 108.18%→28.79%); other axes pending
 **Depends on:** all components · **Feeds:** report + demo video
 
 ---
