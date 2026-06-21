@@ -111,8 +111,10 @@ class MapResponse(BaseModel):
     nodes: dict = Field(default_factory=dict)         # node id -> display name
     positions: dict = Field(default_factory=dict)     # node id -> {x, y} (% coords)
     zones: list = Field(default_factory=list)         # labelled rectangles
+    gates: list = Field(default_factory=list)         # [{code, x, y}] every gate A1..D49
     route: list[str] = Field(default_factory=list)    # ordered node ids (the polyline)
     route_summary: dict | None = None                 # {distance_m, walking_time_min, steps}
     current_position: str | None = None
     to_node: str | None = None
     gate_label: str | None = None                     # real gate code at the target (e.g. C33)
+    gate_position: dict | None = None                 # {x, y} of the target gate

@@ -50,6 +50,23 @@ def test_map_to_node_overrides_flight_gate():
     assert body["route"][-1] == "concourse-d"
 
 
+def test_map_lists_all_gates():
+    with TestClient(app) as c:
+        r = c.post("/map", json={})
+    gates = r.json()["gates"]
+    codes = {g["code"] for g in gates}
+    assert len(gates) == 49
+    assert {"A1", "C30", "D49"} <= codes  # A1..D49 across the concourses
+
+
+def test_map_pins_the_flight_gate():
+    with TestClient(app) as c:
+        r = c.post("/map", json={"flight_number": "SV624"})  # mock gate B12
+    body = r.json()
+    assert body["gate_label"] == "B12"
+    assert body["gate_position"] is not None  # exact stand pinned
+
+
 def test_map_unknown_airport_404():
     with TestClient(app) as c:
         r = c.post("/map", json={"airport_id": "XXX"})

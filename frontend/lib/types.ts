@@ -71,9 +71,11 @@ export interface MapResponse {
   nodes: Record<string, string>;
   positions: Record<string, { x: number; y: number }>;
   zones: { label: string; x: number; y: number; w: number; h: number }[];
+  gates: { code: string; x: number; y: number }[];
   route: string[];
   route_summary: RouteSummary | null;
   current_position: string | null;
   to_node: string | null;
   gate_label: string | null;
+  gate_position: { x: number; y: number } | null;
 }
