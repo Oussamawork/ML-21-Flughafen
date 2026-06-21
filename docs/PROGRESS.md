@@ -5,7 +5,7 @@ Update this at the end of every working session so any future session (human or
 AI) can resume without re-reading everything.
 
 **Project:** Multilingual Smart Airport Wayfinding Assistant (case study: AUH)
-**Branch:** `fix/tdd-01-doda-loader-smoke`
+**Branch:** `feat/tdd-07-frontend`
 
 ---
 
@@ -22,7 +22,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
 | Backend API (FastAPI) | TDD-06 | ⚪ | Designed |
-| Frontend (Next.js) | TDD-07 | ⚪ | Designed |
+| Frontend (Next.js) | TDD-07 | 🟡 | Next.js app built (text+voice, RTL, airport selector, tool trace); build green; consumes TDD-06 API |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
 
@@ -94,6 +94,18 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - Pointed `scripts/smoke_test.sh` at DODa (Common Voice 17 broken on `datasets>=4`).
 - Updated Colab notebook clone cell (git pull + hotfix). Smoke test verified locally.
 - Branch `fix/tdd-01-doda-loader-smoke`. **Next:** full fine-tune on Colab T4.
+
+### Session 2026-06-21 (cont.) — TDD-07 frontend
+- Built the Next.js (App Router) demo UI in `frontend/`: text + voice chat that
+  calls the backend (`/chat` + `/speak`, and `/converse` for voice), auto-plays
+  replies, RTL/LTR per message, EN/FR/AR UI labels, airport selector from
+  `/airports`, and a per-message tool-trace + latency panel.
+- Typed API client (`lib/api.ts`) mirroring the TDD-06 contracts; `MediaRecorder`
+  hook for the mic. Bumped Next to 14.2.35 (security patch).
+- Verified locally: `tsc --noEmit` clean + `next build` green (4 static pages).
+- Branch `feat/tdd-07-frontend` (off main; backend PR #6 not yet merged — the UI
+  is independent and talks over HTTP). **Next:** end-to-end demo once backend
+  merges; wire real STT/agent/TTS as they land; optional WebSocket streaming.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
