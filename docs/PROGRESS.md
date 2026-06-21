@@ -5,7 +5,7 @@ Update this at the end of every working session so any future session (human or
 AI) can resume without re-reading everything.
 
 **Project:** Multilingual Smart Airport Wayfinding Assistant (case study: AUH)
-**Branch:** `claude/professor-projects-analysis-t99iau`
+**Branch:** `feat/tdd-06-backend`
 
 ---
 
@@ -16,7 +16,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Component | TDD | Status | Notes |
 |---|---|---|---|
 | System overview / architecture | TDD-00 | 🟢 | Design written |
-| STT — fine-tuned Whisper | TDD-01 | 🟡 | Pipeline built; DODa Darija dataset wired (`doda_darija.yaml`); **not trained yet** |
+| STT — fine-tuned Whisper | TDD-01 | 🟡 | Pipeline built; DODa wired; smoke test passes (CPU); **full GPU train pending** |
 | LLM agent (LangGraph) | TDD-02 | ⚪ | Designed |
 | Agent tools + flight API | TDD-03 | ⚪ | Designed |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
@@ -100,6 +100,17 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - Wired `WhisperSTT` adapter (lazy) for when `LOAD_STT=true` post-training.
 - **Next:** real Whisper once the checkpoint exists; then TDD-02 agent / TDD-07
   frontend can consume this API.
+
+### Session 2026-06-21 — TDD-01 loader + smoke-test fixes
+- Fixed DODa load crash: filter ~22 null `darija_Arab_new` rows before grouped split.
+- Hardened audio loading (`decode=False` + soundfile/librosa) for Mac CPU / no FFmpeg.
+- Pointed `scripts/smoke_test.sh` at DODa (Common Voice 17 broken on `datasets>=4`).
+- Updated Colab notebook clone cell (git pull + hotfix). Smoke test verified locally.
+- Branch `fix/tdd-01-doda-loader-smoke`. **Next:** full fine-tune on Colab T4.
+
+### Session 2026-06-21 (cont.) — merge main into TDD-06 backend
+- Merged the TDD-01 loader/smoke fixes (PR #7) into `feat/tdd-06-backend`;
+  resolved the PROGRESS session-log conflict (kept both entries).
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
