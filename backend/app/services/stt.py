@@ -2,10 +2,9 @@
 
 Interface: `transcribe(audio_bytes, filename) -> (text, language)`.
 
-- `StubSTT` (default): no model, returns a placeholder so the API runs offline.
-- `WhisperSTT`: lazily wraps `asr_finetuning`'s `WhisperTranscriber` when
-  `LOAD_STT=true` and a model path/id is configured. Importing torch is deferred
-  to that path so the backend boots without it.
+- `StubSTT`: offline placeholder when `LOAD_STT=false` (used in tests / agent-only dev).
+- `WhisperSTT`: wraps `asr_finetuning`'s `WhisperTranscriber` when `LOAD_STT=true`
+  (the default). Heavy imports are deferred so the rest of the backend stays light.
 """
 
 from __future__ import annotations

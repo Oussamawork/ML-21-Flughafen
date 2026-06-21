@@ -30,8 +30,17 @@ cp .env.example .env.local         # set NEXT_PUBLIC_API_BASE_URL if not localho
 npm run dev                        # http://localhost:3000
 ```
 
-Start the backend first (`cd ../backend && uvicorn app.main:app --reload`). The
-backend runs with offline stubs, so the full round-trip works with no GPU/keys.
+Start the backend first:
+
+```bash
+cd ../backend
+pip install -r requirements.txt -r ../asr_finetuning/requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload
+```
+
+Confirm STT is live: `curl -s http://127.0.0.1:8000/health` → `"stt_loaded": true`.
+Agent/TTS still use stubs; flight data defaults to mock (no keys).
 
 > **Mic note:** browsers only allow microphone capture over **HTTPS or
 > `localhost`**. On localhost it works out of the box.

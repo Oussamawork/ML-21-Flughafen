@@ -76,6 +76,7 @@ def health() -> HealthResponse:
     return HealthResponse(
         version=__version__,
         stt_loaded=services.stt_loaded,
+        whisper_model=settings.whisper_model if services.stt_loaded else None,
         agent_backend=settings.agent_backend,
         tts_provider=settings.tts_provider,
     )

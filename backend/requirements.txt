@@ -1,9 +1,10 @@
-# Backend runtime (TDD-06). Deliberately light — the STT model (torch) is only
-# imported when LOAD_STT=true, so it is NOT a hard dependency here.
+# Backend runtime (TDD-06). Torch/transformers/librosa are pulled in via the
+# ASR requirements (default STT path loads the fine-tuned Whisper).
 fastapi>=0.110
 uvicorn[standard]>=0.29
 pydantic>=2.6
 python-multipart>=0.0.9   # multipart/form-data for audio uploads
+python-dotenv>=1.0          # loads backend/.env at startup
 
-# Optional, only needed when LOAD_STT=true (real Whisper):
+# ASR deps (torch, transformers, librosa) — required for the default STT path:
 #   pip install -r ../asr_finetuning/requirements.txt

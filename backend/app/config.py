@@ -9,6 +9,12 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load backend/.env before reading settings (copy from .env.example).
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -39,8 +45,8 @@ class Settings:
     )
 
     # --- speech-to-text (TDD-01) ---
-    # When false (default) a stub STT is used so the API boots without a GPU/model.
-    load_stt: bool = field(default_factory=lambda: _bool("LOAD_STT", False))
+    # When false, a stub STT is used (no GPU). Default true = fine-tuned Whisper.
+    load_stt: bool = field(default_factory=lambda: _bool("LOAD_STT", True))
     # Default = the DODa Darija fine-tune on the HF Hub (TDD-01).
     whisper_model: str = field(
         default_factory=lambda: os.getenv("WHISPER_MODEL", "Amassu/whisper-small-darija")

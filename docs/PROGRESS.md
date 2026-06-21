@@ -21,7 +21,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Agent tools + flight API | TDD-03 | 🟡 | AirLabs flight provider + `/flight` built (mock default; live-verified); KB tools (services/directions/faq) pending |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
-| Backend API (FastAPI) | TDD-06 | 🟡 | Stubs + real STT wired (`LOAD_STT=true` → fine-tuned Whisper); 14 tests passing; awaiting real agent/TTS |
+| Backend API (FastAPI) | TDD-06 | 🟡 | Fine-tuned Whisper STT on by default (`LOAD_STT=true`); `/health` exposes `stt_loaded` + `whisper_model`; agent/TTS still stubs; 14 tests passing |
 | Frontend (Next.js) | TDD-07 | 🟡 | Dashboard: chat + **flight-info card** (typed flight no → `/flight`, live-verified vs mock); text+voice, RTL, airport selector, tool trace; build green. Map panel placeholder (needs `/map`) |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
@@ -221,6 +221,14 @@ M5 Eval+Deploy. → Currently inside **M1**.
   `feat/tdd-07-frontend` was already merged).
 - **Next:** `/map` endpoint + Airport-Map panel (TDD-04/06), then TDD-02 agent so
   chat answers are real.
+
+### Session 2026-06-21 (cont.) — backend STT default
+- **STT is now the default path:** `LOAD_STT=true` in config + `.env.example`;
+  `backend/.env` auto-loaded via `python-dotenv`. README documents one-shot install
+  (`requirements.txt` + `asr_finetuning/requirements.txt`) and a `/health` check.
+- **`GET /health`** returns `whisper_model` when the real STT is active — confirms
+  `Amassu/whisper-small-darija` (or a local ckpt) is loaded.
+- Tests keep stub STT via `tests/conftest.py` (`LOAD_STT=false`).
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
