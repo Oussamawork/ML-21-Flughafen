@@ -1,0 +1,34 @@
+---
+description: FastAPI backend — orchestrates STT → agent → TTS; AirLabs flight tool.
+globs: backend/**
+---
+
+# backend/ — FastAPI service (TDD-06)
+
+Exposes the assistant and orchestrates **STT → agent → TTS**; holds session state;
+REST + WebSocket. Design: `docs/tdd/TDD-06-Backend-API.md`; usage: `backend/README.md`.
+
+## Run / test
+```bash
+cd backend
+python3 -m venv .venv && source .venv/bin/activate   # first time
+pip install -r requirements.txt
+uvicorn app.main:app --reload        # http://127.0.0.1:8000/docs
+pytest                               # end-to-end tests (offline stubs)
+```
+
+## Key conventions
+- **Swappable services** in `app/services/` behind interfaces, each with an
+  **offline stub** so the API runs with no GPU/keys: `stt` (stub ↔ `WhisperSTT`
+  via `LOAD_STT=true`, model `Amassu/whisper-small-darija`), `agent` (stub ↔
+  LangGraph, TDD-02), `tts` (stub ↔ provider, TDD-05). Replace a stub **behind the
+  same signature** — don't change the interface lightly (the frontend depends on it).
+- **Config over code:** every provider/model/key comes from env (`app/config.py`),
+  never a literal. See `.env.example`.
+- **AirLabs is server-side only.** The flight tool calls AirLabs with
+  `AIRLABS_API_KEY`; **strip the AirLabs `request`/meta block** (it echoes the key)
+  before returning anything to the client. Cache responses (free tier = 1,000/mo).
+- `flight_number`/`position` are **typed fields** on `/chat` & `/converse`, never
+  parsed from audio. `airport_id` defaults to `AUH`.
+- Update `app/schemas.py` (pydantic contracts) AND `docs/tdd/TDD-06` together when
+  changing any request/response shape (consistency rule).

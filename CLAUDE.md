@@ -8,9 +8,12 @@ A Master IT 2026 project: the **Multilingual Smart Airport Wayfinding Assistant*
 (case study: Sheikh Zayed International Airport, AUH). It is an agentic, voice+text
 assistant that guides airport passengers in Arabic/Darija/French/English.
 
-The repo is currently **documentation-first**: the full system is specified in
-Technical Design Documents, and only one component (the ASR/speech-to-text
-pipeline) is implemented so far. Most "components" below exist as designs, not code.
+The system is specified in Technical Design Documents (`docs/tdd/`). Built so far:
+the fine-tuned **ASR** (`asr_finetuning/`, the graded ML contribution), the
+**FastAPI backend** (`backend/`, with AirLabs flight data), and the **Next.js
+frontend** (`frontend/`). The LLM **agent** (TDD-02), **knowledge base/RAG**
+(TDD-04), and **TTS** (TDD-05) are still designs (the backend runs them as stubs).
+**`docs/PROGRESS.md` has the live status board — read it first.**
 
 ## Read these first (the project's source of truth)
 
@@ -39,6 +42,7 @@ Concretely, when a change touches any of these, check **all** the rows that appl
 | A config value/field (`config/*.yaml`) | the inline comment, `asr_finetuning/README.md`, and the owning TDD |
 | A dataset / model / provider choice | `docs/PROGRESS.md` (decisions + open questions), the owning TDD, `README.md`, and the config preset |
 | A component design or contract | its `TDD-0X`, `TDD-00` if cross-cutting, and `docs/tdd/README.md` status |
+| A non-negotiable invariant or the git workflow | this file, `.cursor/rules/`, **and** `AGENTS.md` (the project is also developed in Cursor and Codex — keep all three AI guides in sync) |
 | Anything notable this session | `docs/PROGRESS.md` session log + status table |
 | Branch contents (after a push) | the **PR description** — it is the canonical spec; rewrite it clean (audit trail goes in a PR comment) |
 

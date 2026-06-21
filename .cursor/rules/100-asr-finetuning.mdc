@@ -1,0 +1,35 @@
+---
+description: ASR fine-tuning component (the owned ML model). Whisper for Darija/Arabic.
+globs: asr_finetuning/**
+---
+
+# asr_finetuning/ — fine-tuned Whisper (the graded ML contribution)
+
+Fine-tunes `openai/whisper-small` for Darija/Arabic STT (HF `Seq2SeqTrainer`).
+Design: `docs/tdd/TDD-01-ASR-Whisper.md`; usage: `asr_finetuning/README.md`;
+results: `docs/RESULTS_TDD-01.md`. Trained model: `Amassu/whisper-small-darija`
+(WER 108→28.8%, CER 64→9.6% vs base on DODa).
+
+## How to run
+Run **from `asr_finetuning/`** (modules use the `src.` package prefix). Training
+needs a GPU (Colab/Kaggle) — not runnable on a CPU-only box.
+
+```bash
+cd asr_finetuning
+pip install -r requirements.txt
+huggingface-cli login                 # gated datasets (DODa, Common Voice)
+bash scripts/smoke_test.sh            # end-to-end sanity run
+python -m src.train --config config/doda_darija.yaml          # Darija fine-tune
+python -m src.evaluate_model --config config/doda_darija.yaml --model.name <ckpt_or_hub_id>
+```
+
+- **Dotted CLI overrides:** any config field, e.g.
+  `--training.max_steps 5000 --dataset.config ar --model.name openai/whisper-medium`
+  (handled by `src/config.py`).
+- **Eval = the graded metric:** always report **WER/CER of fine-tuned vs. base**
+  on the **same** split (apples-to-apples). Never fabricate numbers — if a run
+  fails, report the real error.
+- Modules: `config.py` (loader) · `data.py` (load/preprocess + collator) ·
+  `metrics.py` (WER/CER) · `train.py` · `evaluate_model.py` ·
+  `transcribe.py` (`WhisperTranscriber`, the serving interface the backend calls).
+- No test framework; `scripts/smoke_test.sh` is the de-facto check.

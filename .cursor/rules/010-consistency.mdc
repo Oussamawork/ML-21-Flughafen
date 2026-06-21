@@ -1,0 +1,28 @@
+---
+description: The non-negotiable consistency rule — propagate every change to all places that describe it.
+alwaysApply: true
+---
+
+# Consistency rule (non-negotiable)
+
+**Every decision or change must be propagated to ALL places that describe it, in
+the same change — never leave one source stale.** A fact (dataset, column name,
+hyperparameter, API provider, contract, endpoint) is almost always written in more
+than one file. When you change it in one, update every other occurrence too,
+before committing.
+
+When a change touches any of these, update **all** rows that apply:
+
+| If you change… | Also update… |
+|---|---|
+| Code behavior (`asr_finetuning/src/*`, `backend/app/*`, `frontend/*`) | the module's `README.md`, the relevant `docs/tdd/TDD-0X-*.md`, and any config comment that describes it |
+| A config value/field (`config/*.yaml`, env vars) | the inline comment, the owning `README.md`, and the owning TDD |
+| A dataset / model / provider choice | `docs/PROGRESS.md` (decisions + open questions), the owning TDD, `README.md`, the config preset |
+| A component design or contract (endpoint, schema) | its `TDD-0X`, `TDD-00` if cross-cutting, and `docs/tdd/README.md` status |
+| A non-negotiable invariant or the git workflow | **`CLAUDE.md`**, **`.cursor/rules/`**, and **`AGENTS.md`** (keep all three AI guides in sync) |
+| Anything notable this session | `docs/PROGRESS.md` session log + status table |
+| Branch contents (after a push) | the **PR description** (canonical spec) |
+
+**Procedure:** after any change, run a repo-wide grep for the old value
+(e.g. `grep -rn "<old-name>"`) to prove no stale copy survives. "I updated the
+code but not the docs" is a defect, not a follow-up.
