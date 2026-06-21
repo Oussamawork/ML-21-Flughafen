@@ -7,6 +7,7 @@ import { Card, SectionTitle } from "./Card";
 // Mirrors SkyGuide's .flight-card (.flight-hero + .details-grid).
 interface Props {
   flight: FlightInfo | null;
+  checkin: string | null;
   loading: boolean;
   apiOnline: boolean;
 }
@@ -22,7 +23,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const DASH = "—";
 
-export function FlightCard({ flight, loading, apiOnline }: Props) {
+export function FlightCard({ flight, checkin, loading, apiOnline }: Props) {
   const heroNumber = loading ? "Loading…" : flight?.flight_number ?? "—";
   const route = loading
     ? "Updating ticket data"
@@ -44,8 +45,8 @@ export function FlightCard({ flight, loading, apiOnline }: Props) {
         <Row label="Airline" value={flight?.airline ?? DASH} />
         <Row label="Terminal" value={flight?.terminal ?? DASH} />
         <Row label="Gate" value={flight?.gate ?? DASH} />
-        {/* Check-in is KB-sourced (TDD-04); not in /flight yet. */}
-        <Row label="Check-in" value={DASH} />
+        {/* Check-in is KB-sourced (TDD-04), not from the flight API. */}
+        <Row label="Check-in" value={flight ? checkin ?? DASH : DASH} />
         <Row label="Baggage" value={flight?.baggage ?? DASH} />
         <Row label="Boarding" value={boarding} />
         <Row label="Status" value={flight?.status ?? DASH} />

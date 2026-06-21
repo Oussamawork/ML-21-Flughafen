@@ -16,12 +16,13 @@ Next.js (App Router) + React + TypeScript + Tailwind.
   position selector.
 - **Flight Information card** — dark hero (flight no + route) + a label/value grid
   (airline, terminal, gate, check-in, baggage, boarding, status), from `POST /flight`.
-  Check-in is KB-sourced later (TDD-04).
+  Check-in is KB-sourced (TDD-04, from `/flight.checkin`).
 - **Airport Agent card** — text + **mic** (`MediaRecorder` → `POST /converse` →
   fine-tuned Whisper) + typed `POST /chat`; voice-over playback via `POST /speak`,
   with a replay button. Per-message RTL for Arabic/Darija replies.
-- **Airport Map card** — distance banner + zones + position nodes, rendered now from
-  an AUH seed layout (`lib/map-seed.ts`); becomes KB-driven when `/map` lands (TDD-04).
+- **Airport Map card** — distance/walk banner + zones + a **live route polyline**
+  from `POST /map` (TDD-04); nodes coloured current/target/on-route. `lib/map-seed.ts`
+  is the pre-fetch/offline fallback shell.
 - **Structured API Output card** — pretty-printed last backend payload ("API proof").
 
 ## Run
@@ -72,7 +73,7 @@ frontend/
 └── lib/
     ├── api.ts            # typed backend client (flight/chat/converse/speak/airports)
     ├── types.ts          # TS mirrors of the backend contracts
-    ├── map-seed.ts       # AUH map seed (positions/zones) until /map (TDD-04)
+    ├── map-seed.ts       # AUH map seed (positions/zones) — /map fallback shell (TDD-04)
     └── i18n.ts           # RTL helper for Arabic/Darija replies
 ```
 

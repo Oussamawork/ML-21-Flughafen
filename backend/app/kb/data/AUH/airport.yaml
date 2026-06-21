@@ -1,0 +1,11 @@
+# Airport metadata (TDD-04). Airport-agnostic: this file is the only place AUH
+# facts live — code never hard-codes them. Add a new airport = a sibling data/<id>/.
+airport_id: AUH
+name: Sheikh Zayed International Airport
+city: Abu Dhabi
+country: United Arab Emirates
+timezone: Asia/Dubai
+terminals: [A]
+languages: [ar, ary, fr, en]
+# Default starting node for directions when the passenger hasn't set "I am here".
+default_origin: entrance

@@ -57,6 +57,7 @@ class OpenAIProvider:
         language: str,
         airport_id: str,
         flight_number: str | None,
+        position: str | None = None,
     ) -> LLMResult:
         tool_defs = [
             {"type": "function", "function": {"name": t.name, "parameters": t.json_schema}}

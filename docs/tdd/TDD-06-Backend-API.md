@@ -31,15 +31,16 @@ state, and provide both a REST API and a real-time WebSocket channel.
 | `POST` | `/chat` | `{text, session_id?, airport_id?, language?, flight_number?, position?}` | `AgentResult` |
 | `POST` | `/speak` | `{text, language}` | audio stream (`audio/mpeg`) |
 | `POST` | `/converse` | multipart audio + `session_id?` + `airport_id?` + `flight_number?` + `position?` | `{text_in, answer, language, audio_url, flight?, route?}` |
-| `POST` | `/flight` | `{flight_number, airport_id?, position?}` | normalized flight card (+ `route` if `position`) |
-| `GET` | `/map` | `?airport_id=AUH` | `{nodes, positions, edges}` (render empty map + position options) |
-| `GET` | `/airports` | — | available `airport_id`s (default `AUH`) |
+| `POST` | `/flight` | `{flight_number, airport_id?, position?}` | normalized flight card + KB `route` to the gate + `checkin` (TDD-04) |
+| `POST` | `/map` | `{airport_id?, flight_number?, gate?, to_node?, position?}` | `{nodes, positions, zones, route, route_summary, current_position, to_node}` |
+| `GET` | `/airports` | — | installed KB `airport_id`s (default `AUH` first) |
 
 - `/converse` is the one-shot voice pipeline: STT → agent → TTS, for the simplest
   demo path.
 - `/flight` powers the ticket-first dashboard: the user types a flight number and
   the UI loads the **flight card + map route** before any chat (mirrors the typed-
-  identity rule, TDD-00). `/map` feeds the empty airport map + "I am here" options.
+  identity rule, TDD-00). `/map` returns the airport layout plus an optional route
+  (to a flight's gate, a gate code, or a node) for the dashboard map + "I am here".
 - `flight_number`/`position` are **structured fields** (never parsed from audio);
   `airport_id` defaults to `AUH`.
 
@@ -112,13 +113,13 @@ LLM/TTS provider keys.
 - [x] `WS /ws/{session_id}`
 - [x] Session store + TTL
 - [x] Pydantic schemas + OpenAPI docs + CORS
-- [x] Offline stubs (STT/agent/TTS) + end-to-end tests (`pytest`, 14 passing)
+- [x] Offline stubs (STT/agent/TTS) + end-to-end tests (`pytest`, 55 passing)
 - [x] Swap stub STT → fine-tuned Whisper (`LOAD_STT=true` → `Amassu/whisper-small-darija`)
-- [x] `POST /flight` (ticket-first card; `route` reserved for TDD-04 map)
+- [x] `POST /flight` (ticket-first card; KB `route` to the gate + `checkin`, TDD-04)
 - [x] AirLabs flight tool wired server-side; strip `request`/meta (key echo)
 - [x] Swap stub agent → **LangGraph** (TDD-02; `AGENT_BACKEND=langgraph` default,
       offline LLM provider — runs key-free)
-- [ ] `GET /map` endpoint (after TDD-04 map data)
+- [x] `POST /map` endpoint (TDD-04 KB layout + route + summary)
 - [x] Typed `flight_number`/`position` on `/chat` & `/converse` (+ WS); persisted on
       the session so voice turns stay grounded; passed to the agent (default `airport_id=AUH`)
 - [ ] Swap stub TTS → provider (TDD-05)

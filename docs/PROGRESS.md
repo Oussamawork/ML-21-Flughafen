@@ -5,7 +5,7 @@ Update this at the end of every working session so any future session (human or
 AI) can resume without re-reading everything.
 
 **Project:** Multilingual Smart Airport Wayfinding Assistant (case study: AUH)
-**Branch:** `feat/tdd-07-dashboard`
+**Branch:** `feat/tdd-04-knowledge-base`
 
 ---
 
@@ -17,17 +17,18 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 |---|---|---|---|
 | System overview / architecture | TDD-00 | 🟢 | Design written |
 | STT — fine-tuned Whisper | TDD-01 | 🟢 | **Fine-tuned: WER 108→28.8%, CER 64→9.6%** (DODa); pushed to `Amassu/whisper-small-darija`; wired into TDD-06 backend (`LOAD_STT=true`) |
-| LLM agent (LangGraph) | TDD-02 | 🟡 | **LangGraph agent built + default-on** (`AGENT_BACKEND=langgraph`); LLM behind a provider interface, **offline default (no key)**; calls the flight tool; 11 tests; live-verified. RAG/KB tools + hosted-LLM pending |
-| Agent tools + flight API | TDD-03 | 🟡 | AirLabs flight provider + `/flight` (mock default; live-verified); **`flight_status`/`find_gate` now exposed as agent tools**; KB tools (services/directions/faq) pending |
-| Knowledge base + RAG | TDD-04 | ⚪ | Designed |
+| LLM agent (LangGraph) | TDD-02 | 🟢 | **LangGraph agent built + default-on** (`AGENT_BACKEND=langgraph`); LLM behind a provider interface, **offline default (no key)**, Groq/OpenAI when keyed; calls flight + KB tools; live-verified |
+| Agent tools + flight API | TDD-03 | 🟢 | AirLabs flight provider + `/flight` (mock default; live-verified); **full tool catalogue wired**: `flight_status`/`find_gate` + KB `directions`/`find_service`/`faq` |
+| Knowledge base + RAG | TDD-04 | 🟢 | **Built** in `backend/app/kb/`: per-`airport_id` YAML pack + map-graph `directions` + service index + **ChromaDB/multilingual-e5 FAQ RAG** (retriever interface: chroma default, keyword for tests); `/map` endpoint; live-verified (semantic EN/FR/AR; Darija weaker — see open Qs) |
 | TTS | TDD-05 | ⚪ | Designed |
 | Backend API (FastAPI) | TDD-06 | 🟡 | Fine-tuned Whisper STT on by default (`LOAD_STT=true`); `/health` exposes `stt_loaded` + `whisper_model`; agent/TTS still stubs; 14 tests passing |
-| Frontend (Next.js) | TDD-07 | 🟡 | **SkyGuide-identical redesign**: landing page + 4-card dashboard (Flight `/flight`, Agent chat+mic, Map shell, JSON proof); live-verified vs mock backend; build green. Live map route needs `/map`; agent answers need TDD-02 |
+| Frontend (Next.js) | TDD-07 | 🟡 | **SkyGuide-identical redesign**: landing page + 4-card dashboard (Flight `/flight` + KB check-in, Agent chat+mic on the real agent, **live Map route from `/map`**, JSON proof); live-verified; build green. Remaining: optional WebSocket streaming |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
 
 **Milestones:** M1 Speech-in · M2 Brain · M3 Knowledge · M4 Speech-out+UI ·
-M5 Eval+Deploy. → Now in **M2** (LangGraph agent built; RAG/KB next).
+M5 Eval+Deploy. → **M3 Knowledge done** (KB + RAG + `/map` built). Next: **M4** —
+real TTS (TDD-05) is the last stubbed component; then eval + deploy (M5).
 
 ## 2. Key decisions (chronological)
 
@@ -89,6 +90,13 @@ M5 Eval+Deploy. → Now in **M2** (LangGraph agent built; RAG/KB next).
       **AirLabs** confirmed: `dep_terminal` ~98%, `dep_gate` ~89% on live AUH
       departures, free tier 1,000 req/month. **No check-in field** → source it from
       the KB. `arr_baggage` arrival-only. Caching mandatory (1,000/mo cap).
+- [x] ~~KB retrieval/embeddings~~ → **ChromaDB + `intfloat/multilingual-e5-base`**
+      (local CPU, no key), behind a `KB_RETRIEVER` interface (`chroma` default,
+      `keyword` for tests). Built; semantic EN/FR/AR retrieval verified.
+- [ ] **Darija FAQ retrieval is weaker** than ar/fr/en with e5-base (short Darija
+      queries mis-rank). Acceptable for the demo (RAG is infra; the owned Darija
+      model is Whisper). If needed: try a stronger/Arabic-tuned embedder or expand
+      Darija FAQ phrasings.
 - [ ] Where to run Whisper in the deployed demo (CPU latency vs hosted STT).
 - [ ] AirLabs free tier is only **1,000 req/month** — confirm caching strategy is
       enough for the demo, or budget a paid tier for the live presentation.
@@ -294,6 +302,31 @@ M5 Eval+Deploy. → Now in **M2** (LangGraph agent built; RAG/KB next).
 - **Browser-verified** end-to-end on Groq: asked without the code → "Your gate is
   B12, in terminal A." `main` now has the SkyGuide frontend, so this branch carries it too.
 - **Next:** TDD-04 (KB + RAG tools + `/map`), then pick the production LLM/model.
+
+### Session 2026-06-21 (cont.) — TDD-04 Knowledge Base + RAG + `/map` (M2 → M3)
+- Built the **knowledge base** in `backend/app/kb/` (per-`airport_id` YAML pack:
+  airport/layout/services/checkin/faq, AUH seeded from SkyGuide's `airport_map.json`
+  + edge table + services + FAQ extended to ar/ary/fr/en). KB lives inside the
+  backend package (like the agent), built once in the service container + injected
+  into the agent and routes.
+- **Map graph `directions`** (BFS + distances ported from SkyGuide) → route + steps +
+  positions + summary; **`find_service`** (structured filter); **`faq` RAG** behind a
+  `KB_RETRIEVER` interface — **`chroma` default** (ChromaDB + multilingual-e5, local
+  CPU, no key) and **`keyword`** (dep-free; tests use it so pytest downloads no model,
+  mirrors `LLM_PROVIDER=offline`/`LOAD_STT=false`). `ingest.py` builds the store.
+- Wired the three tools into the agent (registry + offline-provider intent routing:
+  flight/directions/service/faq/smalltalk; directions chains `flight_status→directions`)
+  and added **`POST /map`** + KB `route`/`checkin` on `/flight`; `/airports` now lists
+  installed packs. **Frontend**: `MapCard` fetches `/map` and draws the live route
+  polyline + distance/walk banner; Check-in filled from `/flight.checkin`.
+- **Step 0 gate passed:** chromadb 1.5.9 + sentence-transformers 5.6.0 install/import
+  on Python 3.14, coexist with the STT torch stack. **Tests: 55 passing** (was 38;
+  +test_kb/test_map + agent KB tests + second-airport agnostic fixture). FE build green.
+- **Live-verified** the real chroma path: semantic FAQ (e.g. "my suitcase did not
+  arrive"→baggage, "comment me connecter à internet"→wifi with no shared keywords),
+  `/map` route SV624→gate-b12 (525 m/7 min), directions chat chain. Darija short
+  queries weaker (logged as an open question). Branch `feat/tdd-04-knowledge-base`.
+- **Next:** TDD-05 real TTS (last stub) → then M5 eval + deploy.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

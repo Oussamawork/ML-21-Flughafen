@@ -13,8 +13,11 @@ the fine-tuned **ASR** (`asr_finetuning/`, the graded ML contribution), the
 **FastAPI backend** (`backend/`, with AirLabs flight data), the **Next.js
 frontend** (`frontend/`), and the **LangGraph agent** (TDD-02, `backend/app/agent/`,
 on by default; the LLM sits behind a provider interface — offline/no-key by
-default, Groq/OpenAI when a key is set). The **knowledge base/RAG** (TDD-04) and
-**TTS** (TDD-05) are still designs (the backend runs them as stubs).
+default, Groq/OpenAI when a key is set), and the **knowledge base + RAG** (TDD-04,
+`backend/app/kb/`): a per-`airport_id` data pack with map-graph directions, a
+service index, and ChromaDB+multilingual-embedding FAQ retrieval, exposed as the
+agent's `directions`/`find_service`/`faq` tools and a `/map` endpoint. Only **TTS**
+(TDD-05) is still a design (the backend runs it as a stub).
 **`docs/PROGRESS.md` has the live status board — read it first.**
 
 ## Read these first (the project's source of truth)
@@ -107,9 +110,12 @@ end-to-end check. The config loader can be exercised directly by importing
 Pipeline: **frontend (Next.js)** → **FastAPI backend** orchestrates **STT
 (fine-tuned Whisper)** → **LLM agent (LangGraph)** → **tools (flight API) / RAG
 knowledge base (ChromaDB)** → **TTS** → response. Built: `backend/` (TDD-06),
-`frontend/` (TDD-07), and the agent in `backend/app/agent/` (TDD-02/03, with the
-flight tool). Still to create when implementing the matching TDD: `knowledge_base/`
-(TDD-04), `speech/` (TDD-05), `evaluation/` (TDD-08), `deploy/` (TDD-09).
+`frontend/` (TDD-07), the agent in `backend/app/agent/` (TDD-02/03, flight +
+KB tools), and the knowledge base in `backend/app/kb/` (TDD-04). Like the agent,
+the KB lives **inside the backend package** (`backend/app/kb/`, not a top-level
+`knowledge_base/`) since it's imported with the `app.` prefix and shares the
+service container. Still to create when implementing the matching TDD: `speech/`
+(TDD-05), `evaluation/` (TDD-08), `deploy/` (TDD-09).
 
 ## Git workflow
 

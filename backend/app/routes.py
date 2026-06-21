@@ -22,10 +22,13 @@ from .schemas import (
     FlightRequest,
     FlightResponse,
     HealthResponse,
+    MapRequest,
+    MapResponse,
     SpeakRequest,
     ToolCall,
     TranscribeResponse,
 )
+from .kb import AirportNotFound
 from .services import audio_store
 from .services.flight import FlightUnavailable
 from .services.stt import AudioDecodeError
@@ -100,10 +103,13 @@ def health() -> HealthResponse:
 
 @router.get("/airports", response_model=AirportsResponse)
 def airports() -> AirportsResponse:
-    # Until the KB (TDD-04) lists installed airport packs, expose the configured one.
-    return AirportsResponse(
-        airports=[settings.default_airport_id], default=settings.default_airport_id
-    )
+    # Installed KB packs (TDD-04), with the configured default first.
+    from .kb import available_airports
+
+    default = settings.default_airport_id
+    installed = available_airports() or [default]
+    ordered = [default] + [a for a in installed if a != default]
+    return AirportsResponse(airports=ordered, default=default)
 
 
 @router.post("/flight", response_model=FlightResponse)
@@ -120,7 +126,56 @@ def flight(req: FlightRequest) -> FlightResponse:
         raise HTTPException(status_code=503, detail=f"Flight data unavailable: {exc}")
     if info is None:
         raise HTTPException(status_code=404, detail="Flight not found.")
-    return FlightResponse(flight=FlightInfo(**info))
+    # Enrich with KB data AirLabs/the flight API can't give: a map route to the
+    # gate and the check-in desk/zone. Both degrade to None if the KB lacks them.
+    route = None
+    checkin = None
+    try:
+        if info.get("gate"):
+            route = services.kb.directions(
+                airport_id, gate=info["gate"], from_node=req.position
+            )
+        checkin = services.kb.checkin(airport_id, info.get("airline"))
+    except AirportNotFound:
+        pass
+    return FlightResponse(flight=FlightInfo(**info), route=route, checkin=checkin)
+
+
+@router.post("/map", response_model=MapResponse)
+def map_endpoint(req: MapRequest) -> MapResponse:
+    """Airport map for the dashboard (TDD-04/07): layout + an optional route.
+
+    Route target precedence: explicit `to_node` > `gate` > the gate of
+    `flight_number` (looked up via the shared flight provider). With no target it
+    returns the layout shell. Origin = `position` ("I am here") else the default."""
+    services = get_services()
+    airport_id = req.airport_id or settings.default_airport_id
+    try:
+        layout = services.kb.layout(airport_id)
+    except AirportNotFound:
+        raise HTTPException(status_code=404, detail=f"No map for airport {airport_id}.")
+
+    gate = req.gate
+    if not req.to_node and not gate and req.flight_number:
+        try:  # resolve the flight's gate; a flight outage just yields no route
+            info = services.flight.get_flight(req.flight_number, airport_id)
+            gate = (info or {}).get("gate")
+        except FlightUnavailable:
+            gate = None
+
+    route_data = services.kb.directions(
+        airport_id, to_node=req.to_node, gate=gate, from_node=req.position
+    )
+    return MapResponse(
+        airport_id=airport_id,
+        nodes=layout["nodes"],
+        positions=layout["positions"],
+        zones=layout["zones"],
+        route=route_data.get("route", []),
+        route_summary=route_data.get("route_summary"),
+        current_position=route_data.get("from_node"),
+        to_node=route_data.get("to_node"),
+    )
 
 
 @router.post("/transcribe", response_model=TranscribeResponse)

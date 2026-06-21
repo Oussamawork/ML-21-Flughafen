@@ -86,6 +86,21 @@ class Settings:
         default_factory=lambda: int(os.getenv("FLIGHT_CACHE_TTL", "60"))
     )
 
+    # --- knowledge base + RAG (TDD-04) ---
+    # Retriever behind an interface: "chroma" (default) = real multilingual
+    # embeddings + ChromaDB (local, no key); "keyword" = dependency-free token
+    # overlap (used by the test suite). Embeddings run on CPU; the model loads lazily.
+    kb_retriever: str = field(default_factory=lambda: os.getenv("KB_RETRIEVER", "chroma"))
+    kb_embedding_model: str = field(
+        default_factory=lambda: os.getenv("KB_EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
+    )
+    kb_persist_dir: str = field(
+        default_factory=lambda: os.getenv(
+            "KB_PERSIST_DIR",
+            str(Path(__file__).resolve().parent.parent / ".kb_chroma"),
+        )
+    )
+
     # --- tts (TDD-05) ---
     # "stub" returns silent audio; real providers: "elevenlabs" / "azure".
     tts_provider: str = field(default_factory=lambda: os.getenv("TTS_PROVIDER", "stub"))

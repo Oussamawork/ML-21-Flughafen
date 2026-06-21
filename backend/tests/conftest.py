@@ -8,3 +8,4 @@ import os
 # local backend/.env so the suite stays offline (no GPU, no LLM key, no network).
 os.environ["LOAD_STT"] = "false"
 os.environ["LLM_PROVIDER"] = "offline"
+os.environ["KB_RETRIEVER"] = "keyword"  # dep-free RAG: no model download in tests

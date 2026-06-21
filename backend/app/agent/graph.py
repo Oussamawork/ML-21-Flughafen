@@ -40,6 +40,7 @@ def build_graph(provider: LLMProvider, registry: dict[str, Tool], max_hops: int)
             language=state["language"],
             airport_id=state["airport_id"],
             flight_number=state.get("flight_number"),
+            position=state.get("position"),
         )
         if result.tool_calls:
             # Assign ids and record the assistant tool-call turn so hosted LLMs see

@@ -25,6 +25,13 @@ pytest                               # end-to-end tests (offline stubs)
   default; `AGENT_BACKEND=stub` is the explicit opt-out), `tts` (stub ↔ provider,
   TDD-05). Replace a stub **behind the same signature** — don't change the interface
   lightly (the frontend depends on it).
+- **Knowledge base + RAG** (TDD-04) lives in `app/kb/` (per-`airport_id` YAML data
+  pack + map-graph `directions` + `find_service` + ChromaDB/embedding `faq`). Backs
+  the agent's KB tools and `POST /map`; built once in the service container
+  (`state.py`) like the flight provider. `KB_RETRIEVER=chroma` (default — real
+  embeddings, local, no key) or `keyword` (dep-free; tests set it via conftest).
+  Build the store with `python -m app.kb.ingest --airport AUH`. New airport = drop
+  `app/kb/data/<id>/`; never hard-code airport facts in code.
 - **Config over code:** every provider/model/key comes from env (`app/config.py`),
   never a literal. See `.env.example`.
 - **AirLabs is server-side only.** The flight tool calls AirLabs with

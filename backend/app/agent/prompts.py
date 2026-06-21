@@ -12,8 +12,11 @@ SYSTEM_PROMPT = (
     "Reply in the user's language (Arabic `ar`, Darija `ary`, French `fr`, or "
     "English `en`). Ground every answer in the tool results and copy gate, terminal, "
     "baggage, and time values **exactly** as returned — never change, swap, or guess "
-    "them. The flight number is a typed field — do not invent it. Call a tool at most "
-    "once per flight per turn. If a lookup fails or a field is missing, say so briefly."
+    "them. The flight number is a typed field — do not invent it. For wayfinding, call "
+    "`directions` and read out the route and walking distance. For places (pharmacy, "
+    "lounge, restroom, food, atm) call `find_service`. For general airport questions "
+    "call `faq` and cite its sources. Call a tool at most once per flight per turn. If "
+    "a lookup fails or a field is missing, say so briefly."
 )
 
 # A Darija example mirroring the proposal ("ayna bawwabati, rihlati SV-624").
@@ -48,6 +51,36 @@ _TEMPLATES = {
         "fr": "Je suis l'assistant de l'aéroport. Je peux aider pour les portes, vols et services.",
         "en": "I'm the airport assistant. I can help with gates, flights and services.",
     },
+    "directions": {
+        "ar": "اتجه إلى {dest}: {route}. المسافة {distance} متر، حوالي {minutes} دقيقة مشياً.",
+        "ary": "سير ل{dest}: {route}. المسافة {distance} متر، تقريباً {minutes} دقيقة بالمشي.",
+        "fr": "Dirigez-vous vers {dest} : {route}. Distance {distance} m, environ {minutes} min à pied.",
+        "en": "Head to {dest}: {route}. Distance {distance} m, about {minutes} min walk.",
+    },
+    "no_route": {
+        "ar": "لم أتمكن من إيجاد مسار. حدّد وجهتك أو رقم رحلتك من فضلك.",
+        "ary": "مالقيتش الطريق. حدّد فين باغي تمشي ولا عطيني رقم الرحلة عافاك.",
+        "fr": "Je n'ai pas pu trouver d'itinéraire. Précisez votre destination ou votre vol.",
+        "en": "I couldn't find a route. Please tell me your destination or flight number.",
+    },
+    "service": {
+        "ar": "إليك ما وجدت: {results}.",
+        "ary": "ها اللي لقيت: {results}.",
+        "fr": "Voici ce que j'ai trouvé : {results}.",
+        "en": "Here's what I found: {results}.",
+    },
+    "no_service": {
+        "ar": "لم أجد هذه الخدمة هنا.",
+        "ary": "مالقيتش هاد الخدمة هنا.",
+        "fr": "Je n'ai pas trouvé ce service ici.",
+        "en": "I couldn't find that service here.",
+    },
+    "no_answer": {
+        "ar": "ليس لدي معلومات كافية عن ذلك. حاول صياغة سؤالك بشكل آخر.",
+        "ary": "ماعنديش معلومات كافية على هادشي. عاود صيغ السؤال عافاك.",
+        "fr": "Je n'ai pas assez d'informations là-dessus. Reformulez votre question.",
+        "en": "I don't have enough information on that. Try rephrasing your question.",
+    },
 }
 
 
@@ -71,3 +104,35 @@ def compose_flight_answer(info: dict | None, lang: str) -> str:
         terminal=info.get("terminal") or "—",
         time=time,
     )
+
+
+def compose_directions(result: dict | None, lang: str) -> str:
+    """Render a `directions` tool result into a route answer in `lang`."""
+    route = (result or {}).get("route") or []
+    if not route:
+        return template("no_route", lang)
+    steps = (result or {}).get("steps") or route
+    summary = (result or {}).get("route_summary") or {}
+    return template("directions", lang).format(
+        dest=steps[-1],
+        route=" → ".join(steps),
+        distance=summary.get("distance_m", 0),
+        minutes=summary.get("walking_time_min", 0),
+    )
+
+
+def compose_service(result: dict | None, lang: str) -> str:
+    """Render a `find_service` tool result into an answer in `lang`."""
+    results = (result or {}).get("results") or []
+    if not results:
+        return template("no_service", lang)
+    items = ", ".join(
+        f"{s.get('name')} ({s.get('zone')}, {s.get('hours')})" for s in results[:4]
+    )
+    return template("service", lang).format(results=items)
+
+
+def compose_faq(result: dict | None, lang: str) -> str:
+    """Return the FAQ answer (already in the user's language) or a graceful miss."""
+    answer = (result or {}).get("answer")
+    return answer or template("no_answer", lang)

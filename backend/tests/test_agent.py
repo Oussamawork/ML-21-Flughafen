@@ -106,3 +106,35 @@ def test_default_agent_imports_no_llm_sdk():
     make_agent()
     assert "openai" not in sys.modules
     assert "groq" not in sys.modules
+
+
+# --- KB tools (TDD-04) -----------------------------------------------------
+
+def test_directions_chains_flight_then_route():
+    # "how do I get to my gate?" -> flight_status (gate) -> directions (route).
+    reply = make_agent().run("how do I get to my gate?", "en", "AUH", [], flight_number="SV624")
+    assert reply.intent == "directions"
+    assert [t["tool"] for t in reply.tool_trace] == ["flight_status", "directions"]
+    assert reply.tool_trace[-1]["result"]["route"][-1] == "gate-b12"
+    assert "Gate B12" in reply.answer
+
+
+def test_find_service_tool():
+    reply = make_agent().run("where is the pharmacy?", "en", "AUH", [])
+    assert reply.intent == "find_service"
+    assert reply.tool_trace[0]["tool"] == "find_service"
+    assert "Airport Pharmacy" in reply.answer
+
+
+def test_faq_tool():
+    reply = make_agent().run("I lost my luggage, what do I do?", "en", "AUH", [])
+    assert reply.intent == "faq"
+    assert reply.tool_trace[0]["tool"] == "faq"
+    assert "baggage" in reply.answer.lower()
+
+
+def test_directions_without_target_is_graceful():
+    reply = make_agent().run("how do I get there?", "en", "AUH", [])
+    assert reply.intent == "directions"
+    assert reply.tool_trace == []  # no flight/gate to resolve -> no_route message
+    assert reply.answer

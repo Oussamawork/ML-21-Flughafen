@@ -6,6 +6,7 @@ import type {
   ConverseResponse,
   FlightResponse,
   Language,
+  MapResponse,
 } from "./types";
 
 export const API_BASE =
@@ -55,6 +56,27 @@ export async function getFlight(params: {
   if (res.status === 404) throw new FlightLookupError("not_found");
   if (res.status === 503) throw new FlightLookupError("unavailable");
   throw new FlightLookupError("error");
+}
+
+export async function getMap(params: {
+  flightNumber?: string;
+  gate?: string;
+  toNode?: string;
+  position?: string;
+  airportId?: string;
+}): Promise<MapResponse> {
+  const res = await fetch(`${API_BASE}/map`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      flight_number: params.flightNumber ?? null,
+      gate: params.gate ?? null,
+      to_node: params.toNode ?? null,
+      position: params.position ?? null,
+      airport_id: params.airportId ?? null,
+    }),
+  });
+  return asJson(res);
 }
 
 export async function sendChat(params: {

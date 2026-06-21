@@ -53,7 +53,26 @@ export interface FlightInfo {
   source: string;
 }
 
+export interface RouteSummary {
+  distance_m: number;
+  walking_time_min: number;
+  steps: number;
+}
+
 export interface FlightResponse {
   flight: FlightInfo;
-  route: Record<string, unknown> | null; // reserved for the KB map (TDD-04)
+  route: Record<string, unknown> | null; // KB route to the gate (TDD-04)
+  checkin: { zone?: string; node?: string } | null; // KB check-in (TDD-04)
+}
+
+// Airport map (TDD-04 `/map`): layout + an optional route polyline.
+export interface MapResponse {
+  airport_id: string;
+  nodes: Record<string, string>;
+  positions: Record<string, { x: number; y: number }>;
+  zones: { label: string; x: number; y: number; w: number; h: number }[];
+  route: string[];
+  route_summary: RouteSummary | null;
+  current_position: string | null;
+  to_node: string | null;
 }

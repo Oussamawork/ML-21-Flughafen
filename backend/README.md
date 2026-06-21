@@ -63,10 +63,27 @@ See `.env.example`: `AIRPORT_ID`, `LOAD_STT`, `WHISPER_MODEL`, `AGENT_BACKEND`
 (`langgraph`|`stub`), `LLM_PROVIDER` (`offline`|`openai`|`groq`), `LLM_MODEL`,
 `MAX_TOOL_HOPS`, `OPENAI_API_KEY`/`GROQ_API_KEY` (server-side only),
 `FLIGHT_API_PROVIDER` (`mock`|`airlabs`), `AIRLABS_API_KEY`, `FLIGHT_CACHE_TTL`,
+`KB_RETRIEVER` (`chroma`|`keyword`), `KB_EMBEDDING_MODEL`, `KB_PERSIST_DIR`,
 `TTS_PROVIDER`, `CORS_ORIGINS`, `SESSION_TTL`.
 
 Point `WHISPER_MODEL` at a local checkpoint dir instead of the HF Hub id if you
 trained locally, e.g. `WHISPER_MODEL=../asr_finetuning/outputs/run/final`.
+
+## Knowledge base (TDD-04)
+
+The agent's `directions`/`find_service`/`faq` tools and `POST /map` are backed by
+`app/kb/` — a per-`airport_id` data pack (`app/kb/data/AUH/*.yaml`) with a map
+graph, a service index, and a multilingual FAQ. FAQ retrieval is behind an
+interface (`KB_RETRIEVER`): **`chroma`** (default — ChromaDB + multilingual e5
+embeddings, runs locally on CPU, no key) or **`keyword`** (dependency-free; the
+test suite uses it so pytest downloads no model). Build the vector store once:
+
+```bash
+python -m app.kb.ingest --airport AUH      # or --all
+```
+
+Add an airport = drop `app/kb/data/<id>/`, then ingest it. Nothing airport-specific
+is hard-coded in code (TDD-00 airport-agnostic rule).
 
 ## Test
 
@@ -81,8 +98,9 @@ pytest                              # stub STT in tests (no GPU)
 | Method | Path | Body | Returns |
 |---|---|---|---|
 | GET | `/health` | — | status + `stt_loaded`, `whisper_model`, active backends |
-| GET | `/airports` | — | installed `airport_id`s (KB-driven later) |
-| POST | `/flight` | `{flight_number, airport_id?, position?}` | `{flight, route?}` — flight by number, scoped to airport (TDD-03) |
+| GET | `/airports` | — | installed KB `airport_id`s (default `AUH` first) |
+| POST | `/flight` | `{flight_number, airport_id?, position?}` | `{flight, route, checkin}` — flight + KB route to the gate + check-in (TDD-03/04) |
+| POST | `/map` | `{airport_id?, flight_number?, gate?, to_node?, position?}` | `{nodes, positions, zones, route, route_summary, current_position, to_node}` (TDD-04) |
 | POST | `/transcribe` | multipart `audio` | `{text, language, session_id}` |
 | POST | `/chat` | `{text, session_id?, airport_id?, language?}` | `ChatResponse` |
 | POST | `/speak` | `{text, language}` | audio stream |
@@ -105,6 +123,7 @@ backend/
 │   ├── state.py         # process-wide service container
 │   ├── routes.py        # REST + WebSocket, STT→agent→TTS orchestration
 │   ├── agent/           # LangGraph agent (TDD-02): graph, providers/, tools/, prompts
+│   ├── kb/              # knowledge base (TDD-04): data/<id>/, loader, graph, retriever/, ingest
 │   └── services/        # stt / agent adapter / tts / flight, lang, audio_store
 └── tests/               # TestClient end-to-end + test_agent.py (offline agent)
 ```

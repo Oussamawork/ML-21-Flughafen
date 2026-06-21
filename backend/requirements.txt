@@ -13,5 +13,12 @@ langchain-core>=1.0
 # openai>=1.0    # uncomment when LLM_PROVIDER=openai
 # groq>=0.11     # uncomment when LLM_PROVIDER=groq
 
+# Knowledge base + RAG (TDD-04): YAML data packs + a retriever behind an interface.
+# The default retriever is "chroma" (real multilingual embeddings, runs locally on
+# CPU — no key); tests use the dependency-free "keyword" retriever (conftest).
+pyyaml>=6.0
+chromadb>=1.5            # vector store for the faq RAG (KB_RETRIEVER=chroma)
+sentence-transformers>=5.0  # multilingual embeddings (reuses the torch already pulled by ASR)
+
 # ASR deps (torch, transformers, librosa) — required for the default STT path:
 #   pip install -r ../asr_finetuning/requirements.txt

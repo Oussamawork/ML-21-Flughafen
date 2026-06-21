@@ -36,6 +36,7 @@ export default function Page() {
   const [position, setPosition] = useState<Position>("entrance");
 
   const [flight, setFlight] = useState<FlightInfo | null>(null);
+  const [checkin, setCheckin] = useState<string | null>(null);
   const [payload, setPayload] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [apiOnline, setApiOnline] = useState(false);
@@ -72,10 +73,12 @@ export default function Page() {
     try {
       const res = await getFlight({ flightNumber: n, position });
       setFlight(res.flight);
+      setCheckin(res.checkin?.zone ?? null);
       setPayload(res);
       setApiOnline(true);
     } catch (err) {
       setFlight(null);
+      setCheckin(null);
       if (err instanceof FlightLookupError && err.kind === "not_found") {
         addAgent({ role: "SkyGuide", text: `No flight found for ${n} at this airport.` });
       } else if (err instanceof FlightLookupError && err.kind === "unavailable") {
@@ -175,7 +178,7 @@ export default function Page() {
       />
 
       <section className="mx-auto grid max-w-[1240px] grid-cols-[.85fr_1.15fr] gap-[18px] px-[clamp(18px,4vw,58px)] pb-[46px] max-[980px]:grid-cols-1">
-        <FlightCard flight={flight} loading={loading} apiOnline={apiOnline} />
+        <FlightCard flight={flight} checkin={checkin} loading={loading} apiOnline={apiOnline} />
         <AgentCard
           messages={messages}
           badge={badge}
@@ -186,7 +189,7 @@ export default function Page() {
           onAsk={onAsk}
           onAudio={onAudio}
         />
-        <MapCard current={position} />
+        <MapCard flightNumber={flightNumber} position={position} />
         <ApiOutputCard payload={payload} />
       </section>
     </div>
