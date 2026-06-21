@@ -5,7 +5,7 @@ Update this at the end of every working session so any future session (human or
 AI) can resume without re-reading everything.
 
 **Project:** Multilingual Smart Airport Wayfinding Assistant (case study: AUH)
-**Branch:** `feat/tdd-07-frontend`
+**Branch:** `feat/tdd-07-dashboard`
 
 ---
 
@@ -22,7 +22,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
 | Backend API (FastAPI) | TDD-06 | 🟡 | Stubs + real STT wired (`LOAD_STT=true` → fine-tuned Whisper); 14 tests passing; awaiting real agent/TTS |
-| Frontend (Next.js) | TDD-07 | 🟡 | Next.js app built (text+voice, RTL, airport selector, tool trace); build green; consumes TDD-06 API |
+| Frontend (Next.js) | TDD-07 | 🟡 | Dashboard: chat + **flight-info card** (typed flight no → `/flight`, live-verified vs mock); text+voice, RTL, airport selector, tool trace; build green. Map panel placeholder (needs `/map`) |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
 
@@ -203,6 +203,24 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - `pytest`: **25 passing** (mock provider, normalization, dep/arr scoping, caching,
   graceful errors, endpoint 200/404/503). Branch `feat/tdd-03-flight-tool`.
 - **Next:** TDD-02 agent (expose `flight_status` as a tool) + TDD-04 KB/map (route).
+
+### Session 2026-06-21 (cont.) — TDD-07 dashboard: flight-info card
+- Chose to advance the **frontend** next (FE-first): `/flight` is the one piece of
+  the new dashboard direction with a live, verified backend, so the flight card is
+  a fully-backed vertical slice (vs. another headless component).
+- Adapted the chat-only UI into a **two-column dashboard**: chat column + flight
+  aside. New `components/FlightPanel.tsx` = typed flight-number input (R1:
+  structured, never parsed from audio) → `POST /flight` → flight card (airline,
+  route, gate, terminal, status badge, times, baggage, delay). Airport-scoped;
+  clears on airport change. 404→"not found", 503→"unavailable".
+- Mirrored `FlightInfo`/`FlightResponse` in `lib/types.ts`; added `getFlight()` +
+  `FlightLookupError` in `lib/api.ts`; flight labels in `lib/i18n.ts` (en/fr/ar).
+- **Map panel is a placeholder** (needs `/map`, TDD-04); structured-output panel
+  pending. `next build` green. **Live-verified** vs the mock backend (EK201 full
+  card; unknown number → 404). Branch `feat/tdd-07-dashboard` (off `main`; old
+  `feat/tdd-07-frontend` was already merged).
+- **Next:** `/map` endpoint + Airport-Map panel (TDD-04/06), then TDD-02 agent so
+  chat answers are real.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

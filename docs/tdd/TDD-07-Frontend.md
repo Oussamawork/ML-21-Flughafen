@@ -1,7 +1,7 @@
 # TDD-07 — Web Demo Frontend
 
 **Component:** `frontend/`
-**Status:** 🟡 In progress (Next.js app built; text+voice, RTL, airport selector; production build green)
+**Status:** 🟡 In progress (Next.js app built; text+voice, RTL, airport selector, **flight-info card from `/flight`**; dashboard layout; production build green)
 **Depends on:** TDD-06 (backend API) · **Consumed by:** end users / demo video
 
 ---
@@ -85,10 +85,15 @@ flight card + map, then chats by voice/text. Panels:
 - [x] Tool-trace panel + per-stage latency display
 - [x] Production build green (`next build`, typecheck clean)
 - [x] In-browser webm→16 kHz WAV re-encode for voice upload
-- [ ] **Dashboard layout** (chat + flight card + map + structured panel)
-- [ ] **Flight-number input** + **position selector** (from `/map`); `airport_id` default AUH
-- [ ] **Flight Information card** (from `/flight` / agent `flight` payload)
+- [x] **Dashboard layout** — two-column shell (chat + context aside); map panel is
+      a placeholder, structured-output panel pending
+- [x] **Flight-number input** (typed/validated, `airport_id`-scoped, default AUH);
+      clears on airport change. Position selector pending (needs `/map`)
+- [x] **Flight Information card** (from `POST /flight`) — airline, route, gate,
+      terminal, status badge, scheduled/estimated, baggage, delay; live-verified
+      against the mock provider (EK201 / 404 path)
 - [ ] **Airport Map panel** — SVG route + clickable nodes + distance/walk banner
+      (placeholder shown; needs `/map`, TDD-04)
 - [ ] **Structured-output panel** (API proof) + tool trace + latency
 - [ ] (v2) WebSocket streaming mode
 - [ ] Polish for the demo video once real STT/agent/TTS are wired

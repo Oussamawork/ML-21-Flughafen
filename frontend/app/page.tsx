@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ChatPanel } from "@/components/ChatPanel";
 import { Composer } from "@/components/Composer";
+import { FlightPanel } from "@/components/FlightPanel";
 import { Header } from "@/components/Header";
 import { converse, getAirports, sendChat, speak } from "@/lib/api";
 import type { UiLang } from "@/lib/i18n";
@@ -97,7 +98,7 @@ export default function Page() {
   );
 
   return (
-    <main dir={uiDir(ui)} className="mx-auto flex h-dvh max-w-3xl flex-col bg-slate-50">
+    <main dir={uiDir(ui)} className="flex h-dvh flex-col bg-slate-50">
       <Header
         ui={ui}
         onUiChange={setUi}
@@ -105,13 +106,20 @@ export default function Page() {
         airport={airport}
         onAirportChange={setAirport}
       />
-      <ChatPanel messages={messages} ui={ui} thinking={thinking} />
-      <Composer
-        ui={ui}
-        disabled={thinking}
-        onSendText={onSendText}
-        onSendAudio={onSendAudio}
-      />
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 overflow-hidden p-4 lg:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-slate-50">
+          <ChatPanel messages={messages} ui={ui} thinking={thinking} />
+          <Composer
+            ui={ui}
+            disabled={thinking}
+            onSendText={onSendText}
+            onSendAudio={onSendAudio}
+          />
+        </div>
+        <aside className="shrink-0 overflow-y-auto lg:w-96">
+          <FlightPanel ui={ui} airport={airport} />
+        </aside>
+      </div>
     </main>
   );
 }

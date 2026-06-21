@@ -24,7 +24,25 @@ type LabelKey =
   | "you"
   | "assistant"
   | "emptyHint"
-  | "error";
+  | "error"
+  | "flightTitle"
+  | "flightNumberLabel"
+  | "flightNumberPlaceholder"
+  | "lookup"
+  | "looking"
+  | "flightNotFound"
+  | "flightUnavailable"
+  | "flightHint"
+  | "status"
+  | "gate"
+  | "terminal"
+  | "baggage"
+  | "scheduled"
+  | "estimated"
+  | "delayed"
+  | "route"
+  | "mapTitle"
+  | "mapPlaceholder";
 
 export const LABELS: Record<UiLang, Record<LabelKey, string>> = {
   en: {
@@ -42,6 +60,24 @@ export const LABELS: Record<UiLang, Record<LabelKey, string>> = {
     assistant: "Assistant",
     emptyHint: "Try: \"Where is my gate for flight SV-624?\"",
     error: "Something went wrong. Is the backend running?",
+    flightTitle: "Your flight",
+    flightNumberLabel: "Flight number",
+    flightNumberPlaceholder: "e.g. SV-624",
+    lookup: "Look up",
+    looking: "Looking up…",
+    flightNotFound: "No flight found for that number at this airport.",
+    flightUnavailable: "Flight data is temporarily unavailable.",
+    flightHint: "Enter your flight number to see gate, terminal and status.",
+    status: "Status",
+    gate: "Gate",
+    terminal: "Terminal",
+    baggage: "Baggage",
+    scheduled: "Scheduled",
+    estimated: "Estimated",
+    delayed: "Delayed {n} min",
+    route: "Route",
+    mapTitle: "Airport map",
+    mapPlaceholder: "Map view coming soon.",
   },
   fr: {
     title: "Assistant d'orientation aéroport",
@@ -58,6 +94,24 @@ export const LABELS: Record<UiLang, Record<LabelKey, string>> = {
     assistant: "Assistant",
     emptyHint: "Essayez : « Où est ma porte pour le vol SV-624 ? »",
     error: "Une erreur s'est produite. Le backend est-il lancé ?",
+    flightTitle: "Votre vol",
+    flightNumberLabel: "Numéro de vol",
+    flightNumberPlaceholder: "ex. SV-624",
+    lookup: "Rechercher",
+    looking: "Recherche…",
+    flightNotFound: "Aucun vol trouvé pour ce numéro à cet aéroport.",
+    flightUnavailable: "Données de vol temporairement indisponibles.",
+    flightHint: "Saisissez votre numéro de vol pour voir porte, terminal et statut.",
+    status: "Statut",
+    gate: "Porte",
+    terminal: "Terminal",
+    baggage: "Bagages",
+    scheduled: "Prévu",
+    estimated: "Estimé",
+    delayed: "Retard {n} min",
+    route: "Itinéraire",
+    mapTitle: "Plan de l'aéroport",
+    mapPlaceholder: "Vue plan bientôt disponible.",
   },
   ar: {
     title: "مساعد التنقل في المطار",
@@ -74,6 +128,24 @@ export const LABELS: Record<UiLang, Record<LabelKey, string>> = {
     assistant: "المساعد",
     emptyHint: "جرّب: «أين بوابتي للرحلة SV-624؟»",
     error: "حدث خطأ ما. هل الخادم يعمل؟",
+    flightTitle: "رحلتك",
+    flightNumberLabel: "رقم الرحلة",
+    flightNumberPlaceholder: "مثال: SV-624",
+    lookup: "بحث",
+    looking: "جارٍ البحث…",
+    flightNotFound: "لا توجد رحلة بهذا الرقم في هذا المطار.",
+    flightUnavailable: "بيانات الرحلات غير متوفرة مؤقتاً.",
+    flightHint: "أدخل رقم رحلتك لعرض البوابة والصالة والحالة.",
+    status: "الحالة",
+    gate: "البوابة",
+    terminal: "الصالة",
+    baggage: "الأمتعة",
+    scheduled: "المجدول",
+    estimated: "المتوقع",
+    delayed: "تأخير {n} دقيقة",
+    route: "المسار",
+    mapTitle: "خريطة المطار",
+    mapPlaceholder: "عرض الخريطة قريباً.",
   },
 };
 
