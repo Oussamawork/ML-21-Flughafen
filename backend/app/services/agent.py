@@ -115,11 +115,12 @@ class StubAgent:
 
 
 def build_agent(flight_provider=None) -> Agent:
-    """Pick the agent backend (AGENT_BACKEND). Default = the LangGraph agent."""
+    """Pick the agent backend. LangGraph is always used unless AGENT_BACKEND is
+    explicitly set to "stub" — so an unset/typo'd value never silently downgrades."""
     from ..config import settings
 
-    if settings.agent_backend == "langgraph":
-        from ..agent import build_langgraph_agent  # lazy: pulls in langgraph
+    if settings.agent_backend == "stub":
+        return StubAgent()
+    from ..agent import build_langgraph_agent  # lazy: pulls in langgraph
 
-        return build_langgraph_agent(flight_provider=flight_provider)
-    return StubAgent()
+    return build_langgraph_agent(flight_provider=flight_provider)
