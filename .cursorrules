@@ -1,0 +1,34 @@
+# Cursor legacy rules (fallback for older Cursor versions).
+# Modern Cursor reads `.cursor/rules/*.mdc` — prefer those. This file restates the
+# invariants so any Cursor version has them.
+
+This is the Multilingual Smart Airport Wayfinding Assistant (Master IT 2026),
+an agentic voice+text airport assistant (Arabic/Darija/French/English), case
+study AUH.
+
+Authoritative docs (read these; they are kept current):
+- CLAUDE.md — full repo guide
+- docs/PROGRESS.md — cross-session status board, decisions, session log (read at
+  session start, update at end)
+- docs/tdd/README.md + docs/tdd/TDD-0X-*.md — architecture and component contracts
+- PROJECT_REQUIREMENTS.md — grading requirements
+
+Non-negotiable invariants:
+1. Owned/fine-tuned model, NOT just a hosted API. The graded ML contribution is
+   the fine-tuned Whisper in asr_finetuning/ (Amassu/whisper-small-darija). LLM,
+   TTS, and flight data (AirLabs) are external infrastructure by design.
+2. Airport-agnostic — never hard-code airport facts; key data by airport_id
+   (defaults to AUH).
+3. Language is first-class — carry ar/ary/fr/en across boundaries; reply in the
+   user's language; RTL for Arabic/Darija.
+4. Flight/ticket number is a typed structured field, never parsed from audio.
+5. Secrets server-side only — the AirLabs key lives in the backend; the frontend
+   never calls AirLabs directly; never commit keys.
+
+Consistency rule: propagate every change to ALL places that describe it (code,
+config comments, module README, owning TDD, docs/PROGRESS.md, docs/tdd/README.md,
+the PR description, CLAUDE.md, and .cursor/rules) in the same change. grep for the
+old value before committing to prove no stale copy survives.
+
+Git workflow: one branch + one PR per TDD/component, cut from an up-to-date main
+(e.g. feat/tdd-02-agent). Small chores → chore/* or docs/* branch.

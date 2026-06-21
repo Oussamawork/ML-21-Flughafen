@@ -1,0 +1,33 @@
+---
+description: Next.js web demo frontend — dashboard UI consuming the backend API.
+globs: frontend/**
+---
+
+# frontend/ — Next.js web demo (TDD-07)
+
+Voice + text demo UI (SkyGuide-style landing + dashboard) consuming the backend.
+Design: `docs/tdd/TDD-07-Frontend.md`; usage: `frontend/README.md`.
+
+## Run
+```bash
+cd frontend
+npm install
+npm run dev          # http://localhost:3000  (backend must be running)
+npm run build        # production build
+npm run typecheck    # tsc --noEmit  (keep this green)
+```
+Env: `NEXT_PUBLIC_API_BASE_URL` (default `http://127.0.0.1:8000`).
+
+## Key conventions
+- **Never call AirLabs (or any flight API) directly.** All flight data flows
+  frontend → FastAPI → AirLabs; the key is server-side only.
+- **The flight/ticket number is a typed input field**, validated — never relied on
+  from audio (STT can't reliably extract codes). Voice is for natural questions.
+- **Language is first-class:** the Language select drives the assistant's reply
+  language (`en`/`fr`/`ary`); render assistant messages **RTL** for Arabic/Darija
+  (`isRtl()` on the detected language).
+- **Mic audio:** re-encode to **16 kHz mono WAV in-browser** before upload — the
+  backend decoder can't read `MediaRecorder`'s webm/opus.
+- The typed API client (`lib/*`) mirrors the backend contracts (TDD-06); if a
+  contract changes, update the client AND `docs/tdd/TDD-07` (consistency rule).
+- Keep the mic/`/converse` path — it demos the fine-tuned Whisper (the graded ML).

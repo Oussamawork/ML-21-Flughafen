@@ -1,0 +1,44 @@
+---
+description: Project overview, sources of truth, and non-negotiable invariants for the Smart Airport Wayfinding Assistant.
+alwaysApply: true
+---
+
+# Smart Airport Wayfinding Assistant — project rules (Cursor)
+
+Master IT 2026 project: an agentic, voice+text airport assistant
+(Arabic/Darija/French/English), case study Sheikh Zayed Intl (AUH).
+
+> These Cursor rules intentionally **mirror `CLAUDE.md`** (the Claude Code guide)
+> and stay thin: they point at the authoritative docs and restate only the
+> invariants. When in doubt, read the docs below — they are kept current.
+
+## Read these first (authoritative, always current)
+- **`CLAUDE.md`** — the full repo guide (commands, architecture, workflow).
+- **`docs/PROGRESS.md`** — cross-session state: component status board, decisions,
+  open questions, dated session log. **Read at the start of a session; update at
+  the end** (status table + a session-log entry).
+- **`docs/tdd/README.md` → `docs/tdd/TDD-00-System-Overview.md`** — architecture,
+  request flow, component contracts. Each component has its own `TDD-0X-*.md`.
+- **`PROJECT_REQUIREMENTS.md`** — the supervisor's grading requirements.
+
+## Non-negotiable invariants (never violate)
+1. **Owned/fine-tuned model, not just a hosted API.** The graded ML contribution
+   is the **fine-tuned Whisper** in `asr_finetuning/` (Darija/Arabic STT). The LLM,
+   TTS, and flight data (AirLabs) are deliberately external infrastructure — do not
+   "simplify" by replacing the fine-tuned Whisper with a hosted speech API.
+2. **Airport-agnostic.** Never hard-code airport facts (gates, services, AUH).
+   Airport-specific data lives in the knowledge base keyed by `airport_id`
+   (defaults to `AUH`).
+3. **Language is first-class.** Carry an explicit language code (`ar`, `ary`
+   Darija, `fr`, `en`) across boundaries; the assistant replies in the user's
+   language. Render RTL for Arabic/Darija.
+4. **Flight/ticket number is a typed structured field, never parsed from audio.**
+   Voice is for natural questions; codes like `SV624` come from an input field.
+5. **Secrets stay server-side.** The AirLabs key lives in the backend only; the
+   frontend never calls AirLabs directly. Never commit keys.
+
+## Git workflow
+- **One branch + one PR per TDD/component**, cut from an up-to-date `main`
+  (e.g. `feat/tdd-02-agent`). Keep each PR scoped to a single TDD.
+- Small cross-cutting doc/chore updates → a short `chore/*` or `docs/*` branch.
+- After a push, the **PR description is the canonical spec** — keep it accurate.
