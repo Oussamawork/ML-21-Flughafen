@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import base64
+import logging
 import time
 from contextlib import contextmanager
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, WebSocket
 from fastapi.responses import Response
+from starlette.websockets import WebSocketDisconnect
 
 from . import __version__
 from .config import settings
@@ -23,6 +26,8 @@ from .schemas import (
 from .services import audio_store
 from .sessions import store as session_store
 from .state import get_services
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -167,8 +172,6 @@ async def ws(websocket: WebSocket, session_id: str) -> None:
             if mtype == "text":
                 text = msg.get("data", "")
             elif mtype == "audio":
-                import base64
-
                 raw = base64.b64decode(msg.get("data", ""))
                 text, _ = services.stt.transcribe(raw)
                 await websocket.send_json({"type": "transcript", "text": text})
@@ -178,5 +181,9 @@ async def ws(websocket: WebSocket, session_id: str) -> None:
 
             resp = _run_agent_turn(text, session, msg.get("language"))
             await websocket.send_json({"type": "answer", **resp.model_dump()})
-    except Exception:  # client disconnect or bad frame ends the loop
-        return
+    except WebSocketDisconnect:
+        return  # normal client disconnect ends the loop
+    except Exception:
+        # A real bug (not a disconnect): log it and close cleanly so it surfaces.
+        logger.exception("WebSocket handler failed for session %s", session_id)
+        await websocket.close(code=1011)

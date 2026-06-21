@@ -34,10 +34,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Credentials cannot be combined with a wildcard origin (the browser rejects it,
+# and Starlette would otherwise reflect any Origin). Only allow credentials when
+# explicit origins are configured.
+_allow_credentials = "*" not in settings.cors_origins
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
