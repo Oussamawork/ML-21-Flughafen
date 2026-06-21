@@ -1,7 +1,7 @@
 # TDD-01 — Speech-to-Text: Fine-Tuned Whisper (Darija/Arabic)
 
 **Component:** `asr_finetuning/` + STT serving glue
-**Status:** 🟢 Pipeline built · ⚪ Not yet trained
+**Status:** 🟢 Pipeline built · 🟢 Fine-tuned (WER 108.18%→28.79% on DODa) · model on HF Hub (`Amassu/whisper-small-darija`) · ⚪ backend wiring pending
 **Depends on:** none (upstream of the agent) · **Consumed by:** TDD-06 (`/transcribe`)
 
 > This TDD formalizes `../PLAN_ASR_Whisper.md`. It is the project's **owned ML
@@ -121,7 +121,7 @@ GPU required for training (Colab/Kaggle); CPU is fine for inference of small mod
 - [x] Verify DODa column names/splits on the HF Hub (train-only; `darija_Arab_new`)
 - [x] Colab/Kaggle click-to-run notebook (`notebooks/finetune_whisper_colab.ipynb`)
 - [x] Smoke test passes locally (Mac CPU + DODa; `scripts/smoke_test.sh`)
-- [ ] Full fine-tune (~4000 steps)
-- [ ] Evaluate fine-tuned; record delta
-- [ ] (opt) Push checkpoint to HF Hub
-- [ ] Wire `WhisperTranscriber` into `/transcribe` (TDD-06)
+- [x] Full fine-tune (3000 steps on a T4)
+- [x] Evaluate fine-tuned; record delta — **WER 108.18% → 28.79%; CER 63.76% → 9.63%** (see `../RESULTS_TDD-01.md`)
+- [x] Push checkpoint to HF Hub — [`Amassu/whisper-small-darija`](https://huggingface.co/Amassu/whisper-small-darija)
+- [ ] Wire `WhisperTranscriber` into `/transcribe` (TDD-06) via `LOAD_STT=true`
