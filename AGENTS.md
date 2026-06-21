@@ -50,7 +50,8 @@ cd asr_finetuning && pip install -r requirements.txt
 python -m src.train --config config/doda_darija.yaml
 python -m src.evaluate_model --config config/doda_darija.yaml --model.name <ckpt_or_hub_id>
 
-# Backend (FastAPI) — runs with offline stubs (no GPU/keys)
+# Backend (FastAPI) — runs with no GPU/keys (LangGraph agent on the offline LLM
+# provider by default; STT real by default; TTS still a stub)
 cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
 cd backend && pytest
 

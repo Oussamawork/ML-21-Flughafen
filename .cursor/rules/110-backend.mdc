@@ -18,11 +18,13 @@ pytest                               # end-to-end tests (offline stubs)
 ```
 
 ## Key conventions
-- **Swappable services** in `app/services/` behind interfaces, each with an
-  **offline stub** so the API runs with no GPU/keys: `stt` (stub ↔ `WhisperSTT`
-  via `LOAD_STT=true`, model `Amassu/whisper-small-darija`), `agent` (stub ↔
-  LangGraph, TDD-02), `tts` (stub ↔ provider, TDD-05). Replace a stub **behind the
-  same signature** — don't change the interface lightly (the frontend depends on it).
+- **Swappable services** in `app/services/` behind interfaces, so the API runs with
+  no GPU/keys: `stt` (stub ↔ `WhisperSTT` via `LOAD_STT=true`, model
+  `Amassu/whisper-small-darija`, **on by default**), `agent` (**LangGraph by
+  default**, TDD-02, in `app/agent/` — LLM behind a provider interface, offline/no-key
+  default; `AGENT_BACKEND=stub` is the explicit opt-out), `tts` (stub ↔ provider,
+  TDD-05). Replace a stub **behind the same signature** — don't change the interface
+  lightly (the frontend depends on it).
 - **Config over code:** every provider/model/key comes from env (`app/config.py`),
   never a literal. See `.env.example`.
 - **AirLabs is server-side only.** The flight tool calls AirLabs with
