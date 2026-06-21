@@ -27,8 +27,8 @@ Non-negotiable invariants:
 
 Consistency rule: propagate every change to ALL places that describe it (code,
 config comments, module README, owning TDD, docs/PROGRESS.md, docs/tdd/README.md,
-the PR description, CLAUDE.md, and .cursor/rules) in the same change. grep for the
-old value before committing to prove no stale copy survives.
+the PR description, CLAUDE.md, .cursor/rules, and AGENTS.md) in the same change.
+grep for the old value before committing to prove no stale copy survives.
 
 Git workflow: one branch + one PR per TDD/component, cut from an up-to-date main
 (e.g. feat/tdd-02-agent). Small chores → chore/* or docs/* branch.

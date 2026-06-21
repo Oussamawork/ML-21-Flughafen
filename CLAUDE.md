@@ -42,7 +42,7 @@ Concretely, when a change touches any of these, check **all** the rows that appl
 | A config value/field (`config/*.yaml`) | the inline comment, `asr_finetuning/README.md`, and the owning TDD |
 | A dataset / model / provider choice | `docs/PROGRESS.md` (decisions + open questions), the owning TDD, `README.md`, and the config preset |
 | A component design or contract | its `TDD-0X`, `TDD-00` if cross-cutting, and `docs/tdd/README.md` status |
-| A non-negotiable invariant or the git workflow | this file **and** `.cursor/rules/` (the project is also developed in Cursor — keep the two AI guides in sync) |
+| A non-negotiable invariant or the git workflow | this file, `.cursor/rules/`, **and** `AGENTS.md` (the project is also developed in Cursor and Codex — keep all three AI guides in sync) |
 | Anything notable this session | `docs/PROGRESS.md` session log + status table |
 | Branch contents (after a push) | the **PR description** — it is the canonical spec; rewrite it clean (audit trail goes in a PR comment) |
 
