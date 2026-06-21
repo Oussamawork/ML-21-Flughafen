@@ -47,14 +47,23 @@ class Pack:
         return self.layout.get("nodes", {})
 
     def gate_node(self, gate: str | None) -> str | None:
+        """Resolve a gate code to a map node. Exact match first, else by the gate's
+        leading letter -> its concourse (so real codes like C33/B20/A1 route)."""
         if not gate:
             return None
-        return self.layout.get("gate_nodes", {}).get(gate.upper())
+        g = str(gate).strip().upper()
+        exact = self.layout.get("gate_nodes", {}).get(g)
+        if exact:
+            return exact
+        letter = g[0] if g and g[0].isalpha() else None
+        return self.layout.get("concourses", {}).get(letter)
 
     def baggage_node(self, baggage: str | None) -> str | None:
+        """Resolve an arrivals baggage belt to a node (exact, else the reclaim hall)."""
         if not baggage:
             return None
-        return self.layout.get("baggage_nodes", {}).get(str(baggage))
+        exact = self.layout.get("baggage_nodes", {}).get(str(baggage))
+        return exact or self.layout.get("baggage_node")
 
 
 def _build_adjacency(layout: dict) -> dict[str, list[tuple[str, int]]]:

@@ -26,13 +26,13 @@ _MOCK_FLIGHTS: dict[str, dict[str, dict]] = {
     "AUH": {
         "SV624": {
             "gate": "B12",
-            "terminal": "T1",
+            "terminal": "A",
             "boarding": "14:35",
             "status": "on time",
         },
         "EK201": {
             "gate": "A7",
-            "terminal": "T3",
+            "terminal": "A",
             "boarding": "—",
             "status": "delayed 40 min",
         },

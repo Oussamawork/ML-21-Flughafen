@@ -43,13 +43,17 @@ class KnowledgeBase:
         """Route to `to_node` (or to the node for a `gate` code). Origin defaults
         to the passenger's `from_node`, else the pack's default origin."""
         pack = load_pack(airport_id)
-        origin = from_node or pack.airport.get("default_origin") or "entrance"
-        if origin not in pack.node_names:
-            origin = pack.airport.get("default_origin") or "entrance"
-        target = to_node or pack.gate_node(gate)
-        if not target:
+        default = pack.airport.get("default_origin") or "entrance"
+        # Target: an explicit node if it's real, else resolve the gate code.
+        target = to_node if (to_node and to_node in pack.node_names) else pack.gate_node(gate)
+        if not target or target not in pack.node_names:
             return {"route": [], "steps": [], "positions": {}, "route_summary": None,
-                    "from_node": origin, "to_node": None}
+                    "from_node": from_node or default, "to_node": None}
+        # Origin: the passenger's node if valid, else the default. Never route a
+        # node to itself (a hosted LLM sometimes sets origin == destination).
+        origin = from_node if (from_node and from_node in pack.node_names) else default
+        if origin == target:
+            origin = default if default != target else target
         return graph.directions(pack, origin, target)
 
     # --- services (structured) --------------------------------------------

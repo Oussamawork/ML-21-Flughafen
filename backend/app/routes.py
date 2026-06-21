@@ -166,6 +166,8 @@ def map_endpoint(req: MapRequest) -> MapResponse:
     route_data = services.kb.directions(
         airport_id, to_node=req.to_node, gate=gate, from_node=req.position
     )
+    # Label the target with the real gate code (the concourse node is generic).
+    gate_label = gate if (gate and route_data.get("to_node")) else None
     return MapResponse(
         airport_id=airport_id,
         nodes=layout["nodes"],
@@ -175,6 +177,7 @@ def map_endpoint(req: MapRequest) -> MapResponse:
         route_summary=route_data.get("route_summary"),
         current_position=route_data.get("from_node"),
         to_node=route_data.get("to_node"),
+        gate_label=gate_label,
     )
 
 

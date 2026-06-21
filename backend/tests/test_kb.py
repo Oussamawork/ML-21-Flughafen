@@ -23,24 +23,34 @@ def kb():
 
 # --- graph / directions ----------------------------------------------------
 
-def test_shortest_path_to_gate(kb):
+def test_shortest_path_to_concourse(kb):
     pack = kb.pack("AUH")
-    path = shortest_path(pack, "entrance", "gate-b12")
-    assert path == ["entrance", "check-in", "security", "duty-free", "gate-b12"]
-    assert route_summary(pack, path)["distance_m"] == 525  # 90+120+85+230
+    path = shortest_path(pack, "entrance", "concourse-b")
+    assert path == ["entrance", "check-in", "security", "duty-free", "concourse-b"]
+    assert route_summary(pack, path)["distance_m"] == 535  # 90+120+85+240
 
 
-def test_directions_resolves_gate_code(kb):
+def test_directions_resolves_gate_code_to_concourse(kb):
     d = kb.directions("AUH", gate="B12")
-    assert d["route"][-1] == "gate-b12"
+    assert d["route"][-1] == "concourse-b"
     assert d["route_summary"]["walking_time_min"] >= 1
-    assert d["positions"]["gate-b12"] == {"x": 78, "y": 43}
+    assert d["positions"]["concourse-b"] == {"x": 85, "y": 42}
+    # A real AirLabs-style gate resolves by its leading letter too.
+    assert kb.directions("AUH", gate="C33")["route"][-1] == "concourse-c"
+    assert kb.directions("AUH", gate="A1")["route"][-1] == "concourse-a"
 
 
 def test_directions_from_position(kb):
-    d = kb.directions("AUH", gate="D18", from_node="pharmacy")
-    assert d["route"][0] == "pharmacy"
-    assert d["route"][-1] == "gate-d18"
+    d = kb.directions("AUH", gate="D18", from_node="security")
+    assert d["route"][0] == "security"
+    assert d["route"][-1] == "concourse-d"
+
+
+def test_directions_origin_equals_target_resets_to_default(kb):
+    # A hosted LLM sometimes sets origin == destination; never route to self.
+    d = kb.directions("AUH", to_node="concourse-c", from_node="concourse-c")
+    assert d["route"][0] == "entrance"
+    assert d["route"][-1] == "concourse-c"
 
 
 def test_directions_unknown_target_is_empty(kb):

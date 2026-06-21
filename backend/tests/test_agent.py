@@ -115,8 +115,8 @@ def test_directions_chains_flight_then_route():
     reply = make_agent().run("how do I get to my gate?", "en", "AUH", [], flight_number="SV624")
     assert reply.intent == "directions"
     assert [t["tool"] for t in reply.tool_trace] == ["flight_status", "directions"]
-    assert reply.tool_trace[-1]["result"]["route"][-1] == "gate-b12"
-    assert "Gate B12" in reply.answer
+    assert reply.tool_trace[-1]["result"]["route"][-1] == "concourse-b"
+    assert "Concourse B" in reply.answer
 
 
 def test_find_service_tool():
@@ -141,9 +141,25 @@ def test_tools_default_airport_id_when_omitted():
     kb = build_knowledge_base()
     assert flight_tools.find_gate(MockFlightProvider(), "SV624")["gate"] == "B12"
     assert flight_tools.flight_status(MockFlightProvider(), "SV624")["gate"] == "B12"
-    assert kb_tools.directions(kb, gate="B12")["route"][-1] == "gate-b12"
+    assert kb_tools.directions(kb, gate="B12")["route"][-1] == "concourse-b"
     assert "results" in kb_tools.find_service(kb, service_type="pharmacy")
     assert "answer" in kb_tools.faq(kb, question="lost baggage")
+
+
+class _FailingProvider:
+    """A hosted LLM that always errors (e.g. rate limit / outage)."""
+
+    def complete(self, **_kw):
+        raise RuntimeError("429 rate_limit_exceeded")
+
+
+def test_llm_provider_failure_degrades_to_offline():
+    # A Groq/OpenAI outage must not 500 the turn — it falls back to the offline
+    # brain, which still resolves the typed flight via tools.
+    agent = make_agent(llm_provider=_FailingProvider())
+    reply = agent.run("where is my gate?", "en", "AUH", [], flight_number="SV624")
+    assert reply.answer  # graceful, no exception
+    assert "B12" in reply.answer  # offline fallback still drove the flight tool
 
 
 def test_directions_without_target_is_graceful():

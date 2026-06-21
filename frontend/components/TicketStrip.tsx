@@ -40,7 +40,7 @@ export function TicketStrip({
         Flight or ticket number
         <input
           value={flightNumber}
-          placeholder="SV624"
+          placeholder="Enter flight number"
           onChange={(e) => onFlightNumber(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onLoad()}
           className={FIELD}

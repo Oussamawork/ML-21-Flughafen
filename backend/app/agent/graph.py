@@ -9,6 +9,8 @@ MAX_TOOL_HOPS. Tool errors are caught here so a turn never crashes.
 
 from __future__ import annotations
 
+import logging
+
 from langgraph.graph import END, START, StateGraph
 
 from ..services.lang import detect_language
@@ -16,6 +18,8 @@ from .prompts import template
 from .providers.base import LLMProvider, ToolSpec
 from .state import AgentState
 from .tools import Tool, ToolBadInput, ToolUnavailable
+
+logger = logging.getLogger(__name__)
 
 
 def _latest_user_text(messages: list[dict]) -> str:
@@ -25,7 +29,12 @@ def _latest_user_text(messages: list[dict]) -> str:
     return ""
 
 
-def build_graph(provider: LLMProvider, registry: dict[str, Tool], max_hops: int):
+def build_graph(
+    provider: LLMProvider,
+    registry: dict[str, Tool],
+    max_hops: int,
+    fallback: LLMProvider | None = None,
+):
     tool_specs = [ToolSpec(t.name, t.json_schema) for t in registry.values()]
 
     def detect_lang(state: AgentState) -> dict:
@@ -34,7 +43,7 @@ def build_graph(provider: LLMProvider, registry: dict[str, Tool], max_hops: int)
         return {"language": detect_language(_latest_user_text(state["messages"]))}
 
     def agent_llm(state: AgentState) -> dict:
-        result = provider.complete(
+        kwargs = dict(
             messages=state["messages"],
             tools=tool_specs,
             language=state["language"],
@@ -42,6 +51,24 @@ def build_graph(provider: LLMProvider, registry: dict[str, Tool], max_hops: int)
             flight_number=state.get("flight_number"),
             position=state.get("position"),
         )
+        # Never crash the turn on an LLM-provider failure (rate limit, network,
+        # auth): degrade to the deterministic offline brain (TDD-00 §6). If even
+        # that fails, return a graceful help message rather than a 500.
+        try:
+            result = provider.complete(**kwargs)
+        except Exception:
+            logger.exception("LLM provider failed; degrading to offline for this turn")
+            try:
+                result = fallback.complete(**kwargs) if fallback else None
+                if result is None:
+                    raise RuntimeError("no fallback provider")
+            except Exception:
+                logger.exception("Offline fallback also failed")
+                return {
+                    "answer": template("fallback", state["language"]),
+                    "intent": "smalltalk",
+                    "pending_calls": [],
+                }
         if result.tool_calls:
             # Assign ids and record the assistant tool-call turn so hosted LLMs see
             # (assistant tool_calls -> tool results) as a linked pair next hop.
@@ -78,6 +105,9 @@ def build_graph(provider: LLMProvider, registry: dict[str, Tool], max_hops: int)
                     result = tool.fn(**args)
                 except (ToolUnavailable, ToolBadInput) as exc:
                     result = {"error": str(exc)}
+                except Exception as exc:  # bad/unknown args from a hosted LLM, etc.
+                    logger.exception("tool %s failed", name)
+                    result = {"error": f"{type(exc).__name__}: {exc}"}
             trace.append({"tool": name, "args": args, "result": result})
             messages.append({
                 "role": "tool",

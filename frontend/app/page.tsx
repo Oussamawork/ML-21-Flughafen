@@ -31,7 +31,7 @@ function play(url: string) {
 
 export default function Page() {
   const [screen, setScreen] = useState<"home" | "app">("home");
-  const [flightNumber, setFlightNumber] = useState("SV624");
+  const [flightNumber, setFlightNumber] = useState("");
   const [language, setLanguage] = useState<UiLanguage>("en");
   const [position, setPosition] = useState<Position>("entrance");
 

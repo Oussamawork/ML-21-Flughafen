@@ -1,75 +1,61 @@
 # Airport map graph (TDD-04 §3.1) — powers `directions` (TDD-03) and the frontend
-# map (TDD-07, /map). Seeded from the teammate's SkyGuide airport_map.json + its
-# edge-distance table (reused as data, not code). Positions are % coords (0-100).
+# map (TDD-07, /map). Schematic AUH (Midfield, Terminal A): a central spine
+# (entrance -> check-in -> security -> duty free) feeding four concourses A/B/C/D.
+# Real gate codes (e.g. C33, B20, A1) resolve to their concourse by leading letter,
+# so live AirLabs data routes on the map. Positions are % coords (0-100).
 
 nodes:
   entrance: Main entrance
   check-in: Check-in hall
   security: Security control
-  duty-free: Duty free area
-  pharmacy: Airport pharmacy
-  baggage-03: Baggage belt 03
-  baggage-06: Baggage belt 06
-  baggage-11: Baggage belt 11
-  baggage-14: Baggage belt 14
-  gate-a03: Gate A03
-  gate-b12: Gate B12
-  gate-c07: Gate C07
-  gate-d18: Gate D18
+  duty-free: Duty free plaza
+  baggage: Baggage reclaim
+  concourse-a: Concourse A
+  concourse-b: Concourse B
+  concourse-c: Concourse C
+  concourse-d: Concourse D
 
 positions:
-  entrance: {x: 8, y: 54}
-  check-in: {x: 21, y: 54}
-  security: {x: 36, y: 54}
-  duty-free: {x: 51, y: 54}
-  pharmacy: {x: 39, y: 75}
-  baggage-03: {x: 32, y: 30}
-  baggage-06: {x: 40, y: 30}
-  baggage-11: {x: 48, y: 30}
-  baggage-14: {x: 56, y: 30}
-  gate-a03: {x: 72, y: 24}
-  gate-b12: {x: 78, y: 43}
-  gate-c07: {x: 78, y: 64}
-  gate-d18: {x: 72, y: 82}
+  entrance: {x: 7, y: 55}
+  check-in: {x: 20, y: 55}
+  security: {x: 33, y: 55}
+  duty-free: {x: 47, y: 55}
+  baggage: {x: 33, y: 26}
+  concourse-a: {x: 73, y: 20}
+  concourse-b: {x: 85, y: 42}
+  concourse-c: {x: 85, y: 66}
+  concourse-d: {x: 73, y: 88}
 
-# Undirected edges with walking distance in metres. Listed once per pair; the
-# loader expands them to a symmetric adjacency map.
+# Undirected edges with walking distance in metres (loader makes them symmetric).
 edges:
   - {a: entrance, b: check-in, distance_m: 90}
   - {a: check-in, b: security, distance_m: 120}
   - {a: security, b: duty-free, distance_m: 85}
-  - {a: security, b: pharmacy, distance_m: 70}
-  - {a: security, b: baggage-03, distance_m: 110}
-  - {a: security, b: baggage-06, distance_m: 125}
-  - {a: security, b: baggage-11, distance_m: 150}
-  - {a: security, b: baggage-14, distance_m: 170}
-  - {a: duty-free, b: gate-a03, distance_m: 180}
-  - {a: duty-free, b: gate-b12, distance_m: 230}
-  - {a: duty-free, b: gate-c07, distance_m: 260}
-  - {a: duty-free, b: gate-d18, distance_m: 310}
+  - {a: security, b: baggage, distance_m: 110}
+  - {a: duty-free, b: concourse-a, distance_m: 220}
+  - {a: duty-free, b: concourse-b, distance_m: 240}
+  - {a: duty-free, b: concourse-c, distance_m: 260}
+  - {a: duty-free, b: concourse-d, distance_m: 300}
 
 # Rectangular zone labels for the map (% layout): x, y, w, h.
 zones:
-  - {label: Entrance, x: 3, y: 44, w: 13, h: 18}
-  - {label: Check-in, x: 17, y: 40, w: 15, h: 26}
-  - {label: Security, x: 33, y: 40, w: 12, h: 26}
-  - {label: Duty free, x: 47, y: 36, w: 17, h: 34}
-  - {label: Baggage, x: 28, y: 17, w: 34, h: 20}
-  - {label: Gates, x: 68, y: 14, w: 24, h: 74}
+  - {label: Entrance, x: 2, y: 46, w: 12, h: 18}
+  - {label: Check-in, x: 15, y: 43, w: 13, h: 24}
+  - {label: Security, x: 29, y: 43, w: 11, h: 24}
+  - {label: Retail Plaza, x: 41, y: 41, w: 15, h: 28}
+  - {label: Baggage Reclaim, x: 22, y: 15, w: 24, h: 20}
+  - {label: Concourses, x: 64, y: 12, w: 32, h: 80}
 
-# AirLabs gate code -> graph node (so a flight's gate resolves to a map target).
-gate_nodes:
-  A03: gate-a03
-  B12: gate-b12
-  C07: gate-c07
-  D18: gate-d18
+# Any gate code resolves to its concourse by leading letter (airport-agnostic) —
+# so a real gate like C33/B20/A1 routes even though it isn't listed individually.
+concourses:
+  A: concourse-a
+  B: concourse-b
+  C: concourse-c
+  D: concourse-d
 
-# AirLabs arr_baggage value -> graph node (arrivals routing).
-baggage_nodes:
-  "03": baggage-03
-  "06": baggage-06
-  "11": baggage-11
-  "14": baggage-14
+# Arrivals: any AirLabs arr_baggage belt resolves to the reclaim hall.
+baggage_node: baggage
 
 # Average walking speed (m/min) used for walking_time_min in route summaries.
 walking_speed_m_per_min: 75

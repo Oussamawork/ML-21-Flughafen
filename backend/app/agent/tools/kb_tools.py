@@ -14,9 +14,9 @@ from . import ToolBadInput, ToolUnavailable
 DIRECTIONS_SCHEMA = {
     "type": "object",
     "properties": {
-        "to_node": {"type": "string", "description": "Target layout node, e.g. gate-b12"},
-        "gate": {"type": "string", "description": "Gate code, e.g. B12 (resolved to its node)"},
-        "from_node": {"type": "string", "description": "Origin node; defaults to the passenger position or entrance"},
+        "to_node": {"type": "string", "description": "Target layout node, e.g. concourse-c, duty-free, baggage"},
+        "gate": {"type": "string", "description": "Gate code, e.g. C33 (resolved to its concourse)"},
+        "from_node": {"type": "string", "description": "Origin node; omit to use the passenger position or entrance"},
         "airport_id": {"type": "string", "default": "AUH"},
     },
 }

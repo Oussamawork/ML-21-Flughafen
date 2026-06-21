@@ -44,6 +44,7 @@ export function MapCard({ flightNumber, position }: Props) {
   const onRoute = new Set(route);
   const current = map?.current_position ?? position;
   const target = map?.to_node ?? (route.length ? route[route.length - 1] : null);
+  const gateLabel = map?.gate_label ?? null;
   const summary = map?.route_summary;
   const exploring = destination !== null;
   const targetName = target ? map?.nodes?.[target] ?? target : null;
@@ -102,7 +103,7 @@ export function MapCard({ flightNumber, position }: Props) {
         {zones.map((z) => (
           <div
             key={z.label}
-            className="pointer-events-none absolute grid place-items-center rounded-lg border border-black/10 bg-white/[.62] text-xs font-[950] uppercase text-[#405066]"
+            className="pointer-events-none absolute flex items-start justify-center rounded-lg border border-black/10 bg-white/[.5] pt-1.5 text-[11px] font-[950] uppercase tracking-wide text-[#5a6b80]"
             style={{ left: `${z.x}%`, top: `${z.y}%`, width: `${z.w}%`, height: `${z.h}%` }}
           >
             {z.label}
@@ -128,7 +129,7 @@ export function MapCard({ flightNumber, position }: Props) {
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
               className={`absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white text-[10px] font-[950] text-white transition hover:scale-[1.14] ${size} ${bg} ${ring}`}
             >
-              {shortNode(node)}
+              {isTarget && gateLabel ? gateLabel : shortNode(node)}
             </button>
           );
         })}
