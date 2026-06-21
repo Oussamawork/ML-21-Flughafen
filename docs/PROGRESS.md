@@ -47,6 +47,33 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - **2026-06-21** ✅ **TDD-01 fine-tune complete.** `whisper-small` on DODa:
   WER 108.18%→28.79%, CER 63.76%→9.63% (1,259-sample sentence-grouped held-out).
   The owned ML contribution is now a measured, strong result.
+- **2026-06-21** ✅ **STT wired into the backend** (`LOAD_STT=true` → fine-tuned
+  Whisper; PR #10). Voice round-trip verified end-to-end through the frontend.
+- **2026-06-21** **Product decisions after reviewing the teammate's "SkyGuide"
+  build** (the parallel prototype in `~/Documents/Private/projet_ml_ch`):
+  - **R1 — Flight/ticket number is a typed, structured input, not parsed from
+    audio.** STT+LLM can't reliably extract a code like `SV624` from Darija/noisy
+    speech. Voice is for natural questions; the flight number is entered in a field.
+  - **R2 — `airport_id` stays first-class but defaults to `AUH`** unless specified
+    (keeps the airport-agnostic design; matches SkyGuide's AUH default).
+  - **R3 — "I am here" current-position selector** so routing/answers are relative
+    to the user's location (position = a node in the KB layout graph).
+  - **R4 — Flight-data provider = AirLabs** (v9). External infrastructure; the
+    owned-model requirement stays satisfied by Whisper.
+  - **Frontend evolves from chat-only to a dashboard** (chat + Flight-Info card +
+    Airport-Map panel + Structured-Output panel), porting and surpassing SkyGuide.
+    The airport map is **our** data (KB, keyed by `airport_id`), seeded from
+    SkyGuide's `airport_map.json` + edge distances — *not* hard-coded AUH.
+- **2026-06-21** ✅ **AirLabs verified on a live free-tier key.** `/flight?flight_iata=`
+  is the primary lookup; `dep_terminal` 98% / `dep_gate` 89% / `status` 100% coverage
+  on real AUH departures; `arr_baggage` is arrival-only (~35%). Free tier =
+  **1,000 req/month**, 250/min, 2,500/hr. **No check-in field** (→ KB). `/flight`
+  can't filter by airport (scope in code). Response **echoes the api_key** → backend
+  must strip meta before returning to the FE. Key stays server-side, never committed.
+- **2026-06-21** **No new TDDs needed** for the dashboard/map: it maps onto TDD-04
+  (map graph + positions + check-in data), TDD-03 (`directions` route tool +
+  AirLabs flight tool), TDD-06 (request contract + `/flight` & `/map` endpoints),
+  and TDD-07 (dashboard UI). TDD-00/02/03/04/06/07 updated accordingly.
 
 ## 3. Open questions / to resolve
 
@@ -55,9 +82,13 @@ M5 Eval+Deploy. → Currently inside **M1**.
       Hub: `train` split only; Arabic-script column `darija_Arab_new`. Eval set is
       carved from train with a sentence-grouped split (no leakage). Dataset is gated.
 - [ ] LLM choice for the agent: GPT-4o-mini (default) vs Llama 3.1 via Groq.
-- [ ] Flight API provider that actually returns **gate/terminal** for AUH on free
-      tier (else seed gates in KB for case-study flights).
+- [x] ~~Flight API provider that returns **gate/terminal** for AUH on free tier~~ →
+      **AirLabs** confirmed: `dep_terminal` ~98%, `dep_gate` ~89% on live AUH
+      departures, free tier 1,000 req/month. **No check-in field** → source it from
+      the KB. `arr_baggage` arrival-only. Caching mandatory (1,000/mo cap).
 - [ ] Where to run Whisper in the deployed demo (CPU latency vs hosted STT).
+- [ ] AirLabs free tier is only **1,000 req/month** — confirm caching strategy is
+      enough for the demo, or budget a paid tier for the live presentation.
 
 ## 4. Session log
 
@@ -146,6 +177,20 @@ M5 Eval+Deploy. → Currently inside **M1**.
   `pytest`: **14 passing**. Fixed a stale `Oussamawork/...` id in `backend/README.md`.
 - Branch `feat/tdd-06-stt-integration`. **Next:** TDD-02 LangGraph agent to replace
   the stub; then the voice round-trip is real STT → real agent.
+
+### Session 2026-06-21 (cont.) — product mapping: flight data + dashboard
+- Reviewed the teammate's **SkyGuide** prototype (ran it; its animated airport map,
+  flight card, and ticket-first flow are the parts worth adopting).
+- Locked decisions **R1–R4** (see §2): typed flight number, `airport_id` default
+  AUH, position selector, **AirLabs** as the flight provider; frontend → dashboard.
+- Researched + **live-verified AirLabs** on a free key (see §2). `/flight` is the
+  primary lookup; gate/terminal well-covered; no check-in field; 1,000 req/mo.
+- **Documented everything before building:** updated TDD-00 (flow/stack/risks),
+  TDD-02 (agent state + flight_number/position), TDD-03 (AirLabs flight tool +
+  route tool), TDD-04 (map graph + positions + check-in, seeded from SkyGuide),
+  TDD-06 (request contract + `/flight` & `/map` endpoints), TDD-07 (dashboard).
+- **Next:** build order — TDD-03 (AirLabs flight tool, de-risked) then TDD-02
+  (agent), then TDD-04 (KB+map) and the TDD-07 dashboard.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

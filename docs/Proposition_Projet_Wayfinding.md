@@ -65,7 +65,7 @@ Arabic with step-by-step navigation and the updated boarding time.
 - **LLM Agent:** LangGraph / LangChain with GPT-4o-mini or Llama 3.1 (via Groq)
 - **Speech Recognition:** OpenAI Whisper — **fine-tuned for Arabic/Darija** (see `../asr_finetuning/`)
 - **Speech Synthesis:** ElevenLabs or Azure Cognitive Speech Services
-- **Flight Data API:** AviationStack or AeroDataBox
+- **Flight Data API:** AirLabs (v9)
 - **Vector Database (RAG):** ChromaDB
 - **Backend:** FastAPI with WebSockets for real-time interaction
 - **Frontend:** Next.js / React with voice interface
