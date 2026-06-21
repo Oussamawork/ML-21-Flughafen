@@ -22,8 +22,27 @@ class OpenAIProvider:
         self._client = OpenAI(api_key=api_key)
         self._model = model
 
-    def _to_openai_messages(self, messages: list[dict], airport_id: str, language: str) -> list[dict]:
+    def _to_openai_messages(
+        self,
+        messages: list[dict],
+        airport_id: str,
+        language: str,
+        flight_number: str | None,
+        position: str | None,
+    ) -> list[dict]:
         out = [{"role": "system", "content": system_prompt(airport_id, language)}]
+        # Tell the model the passenger's TYPED context so it calls tools with the
+        # real flight number instead of the schema's example code.
+        ctx = []
+        if flight_number:
+            ctx.append(
+                f"the passenger's flight number is {flight_number} — use exactly this "
+                f"for flight/gate tools; never substitute an example code"
+            )
+        if position:
+            ctx.append(f"the passenger is currently at node '{position}'")
+        if ctx:
+            out.append({"role": "system", "content": "Passenger context: " + "; ".join(ctx) + "."})
         for m in messages:
             role = m.get("role")
             if role == "tool":
@@ -65,7 +84,7 @@ class OpenAIProvider:
         ]
         resp = self._client.chat.completions.create(
             model=self._model,
-            messages=self._to_openai_messages(messages, airport_id, language),
+            messages=self._to_openai_messages(messages, airport_id, language, flight_number, position),
             tools=tool_defs or None,
             temperature=0,  # faithful to tool results; reduce hallucination
         )

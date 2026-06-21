@@ -18,7 +18,7 @@ from . import ToolUnavailable
 FLIGHT_STATUS_SCHEMA = {
     "type": "object",
     "properties": {
-        "flight_number": {"type": "string", "description": "IATA code, e.g. SV624"},
+        "flight_number": {"type": "string", "description": "The passenger's IATA flight code from the context (do not use example values)"},
         "airport_id": {"type": "string", "default": "AUH"},
     },
     "required": ["flight_number"],
