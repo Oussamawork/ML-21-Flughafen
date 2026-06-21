@@ -62,6 +62,8 @@ export async function sendChat(params: {
   sessionId?: string;
   airportId?: string;
   language?: Language;
+  flightNumber?: string;
+  position?: string;
 }): Promise<ChatResponse> {
   const res = await fetch(`${API_BASE}/chat`, {
     method: "POST",
@@ -71,6 +73,8 @@ export async function sendChat(params: {
       session_id: params.sessionId ?? null,
       airport_id: params.airportId ?? null,
       language: params.language ?? null,
+      flight_number: params.flightNumber ?? null,
+      position: params.position ?? null,
     }),
   });
   return asJson(res);
@@ -80,6 +84,8 @@ export async function converse(params: {
   audio: Blob;
   sessionId?: string;
   filename?: string;
+  flightNumber?: string;
+  position?: string;
 }): Promise<ConverseResponse> {
   // Re-encode to 16 kHz mono WAV; the browser records webm/opus, which the
   // backend's audio decoder cannot read.
@@ -87,6 +93,8 @@ export async function converse(params: {
   const form = new FormData();
   form.append("audio", wav, params.filename ?? "clip.wav");
   if (params.sessionId) form.append("session_id", params.sessionId);
+  if (params.flightNumber) form.append("flight_number", params.flightNumber);
+  if (params.position) form.append("position", params.position);
   const res = await fetch(`${API_BASE}/converse`, { method: "POST", body: form });
   const data = await asJson<ConverseResponse>(res);
   return { ...data, audio_url: absolute(data.audio_url) };

@@ -130,5 +130,6 @@ def run_agent(text: str, session_id: str, airport_id: str = "AUH",
 - [x] Default-on (`AGENT_BACKEND=langgraph`); existing API tests pass unchanged; live-verified
 - [ ] Wire RAG/KB tools (`find_service`/`directions`/`faq`) with TDD-04
 - [ ] Verify hosted LLM path (OpenAI/Groq) once a key is wired; pick the model
-- [ ] Thread typed `flight_number`/`position` from `/chat` (pre-wired; needs TDD-06/07)
+- [x] Thread typed `flight_number`/`position` from the dashboard → `/chat` & `/converse`
+      → agent (ticket-strip number grounds answers without repeating the code)
 - [ ] (stretch) fine-tuned intent classifier

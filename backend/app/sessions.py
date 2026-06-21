@@ -18,6 +18,11 @@ class Session:
     session_id: str
     airport_id: str
     language: str | None = None
+    # Typed dashboard context (TDD-00 "identity over inference"): the flight number
+    # is entered in the ticket strip, never parsed from speech. Persisted so both
+    # text and voice turns can ground answers without the user repeating it.
+    flight_number: str | None = None
+    position: str | None = None
     messages: list[dict] = field(default_factory=list)  # {role, content}
     created_at: float = field(default_factory=time.time)
     last_access: float = field(default_factory=time.time)

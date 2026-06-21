@@ -119,8 +119,8 @@ LLM/TTS provider keys.
 - [x] Swap stub agent → **LangGraph** (TDD-02; `AGENT_BACKEND=langgraph` default,
       offline LLM provider — runs key-free)
 - [ ] `GET /map` endpoint (after TDD-04 map data)
-- [ ] Add `flight_number`/`position` to `/chat` & `/converse`; default `airport_id=AUH`
-      (agent side pre-wired; needs the request-contract + FE send)
+- [x] Typed `flight_number`/`position` on `/chat` & `/converse` (+ WS); persisted on
+      the session so voice turns stay grounded; passed to the agent (default `airport_id=AUH`)
 - [ ] Swap stub TTS → provider (TDD-05)
 
 > **Implementation note:** STT/agent/TTS are interfaces in `app/services/`; STT and

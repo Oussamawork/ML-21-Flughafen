@@ -28,6 +28,8 @@ class ChatRequest(BaseModel):
     session_id: str | None = None
     airport_id: str | None = None
     language: Language | None = None
+    flight_number: str | None = None  # typed in the ticket strip (TDD-00), not from STT
+    position: str | None = None       # current map node (TDD-04)
 
 
 class ToolCall(BaseModel):

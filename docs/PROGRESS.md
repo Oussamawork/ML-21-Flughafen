@@ -277,6 +277,24 @@ M5 Eval+Deploy. → Now in **M2** (LangGraph agent built; RAG/KB next).
   pure plumbing. Branch `feat/tdd-02-agent` (off `main`).
 - **Next:** RAG/KB tools + `/map` (TDD-04); wire a real LLM key to pick the model.
 
+### Session 2026-06-21 (cont.) — verified agent on Groq + wired typed flight number
+- **Tested the agent with a real LLM (free):** GPT isn't free, so used **Groq** (Llama
+  3.3 70B) via the provider interface (`LLM_PROVIDER=groq`, free key in gitignored
+  `.env`). Found + fixed a real bug in the hosted path: it **looped tool calls then
+  hallucinated** — corrected the tool-call protocol (assistant `tool_calls` + linked
+  `tool_call_id` messages), set `temperature=0`, hardened the prompt. Faithful EN/FR
+  answers verified live in the dashboard (commit `415e10f`).
+- **Whisper decode fix** (`transcribe.py`): `clean_up_tokenization_spaces=False` to
+  preserve Arabic/French spacing + silence the BPE warning (commit `35d0907`).
+- **Wired the ticket-strip flight number into `/chat` & `/converse`:** `ChatRequest`
+  + `converse` form fields gain `flight_number`/`position`; persisted on the
+  `Session` (so voice turns stay grounded); `_run_agent_turn` passes them to the
+  agent. Frontend (`api.ts`, `page.tsx`) sends the ticket-strip number on ask + mic.
+  Now "where is my gate?" (no code) → grounded answer. 38 backend tests; FE build green.
+- **Browser-verified** end-to-end on Groq: asked without the code → "Your gate is
+  B12, in terminal A." `main` now has the SkyGuide frontend, so this branch carries it too.
+- **Next:** TDD-04 (KB + RAG tools + `/map`), then pick the production LLM/model.
+
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
 - Did: ...
