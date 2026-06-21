@@ -2,8 +2,8 @@
 
 **Component:** `agent/tools/`
 **Status:** ⚪ Not started
-**Depends on:** TDD-04 (RAG for FAQ/services), external Flight API
-**Consumed by:** TDD-02 (agent)
+**Depends on:** TDD-04 (KB for FAQ/services/layout/check-in), **AirLabs API** (flight data)
+**Consumed by:** TDD-02 (agent), TDD-06 (`/flight` endpoint)
 
 ---
 
@@ -22,22 +22,39 @@ out, no LLM inside.
 
 | Tool | Purpose | Backed by |
 |---|---|---|
-| `flight_status` | Live status/gate/terminal/boarding for a flight number | Flight API |
-| `find_gate` | Gate + terminal for a flight (subset of status) | Flight API |
+| `flight_status` | Live status/gate/terminal/baggage/times for a flight number | **AirLabs** (§4) |
+| `find_gate` | Gate + terminal for a flight (subset of status) | **AirLabs** (§4) |
 | `find_service` | Nearby services (restroom, pharmacy, lounge, food) | KB / RAG (TDD-04) |
-| `directions` | Step-by-step navigation between two points/zones | KB layout (TDD-04) |
+| `directions` | Route between two nodes (+ map polyline & walk time) | KB layout graph (TDD-04) |
 | `faq` | General airport FAQ (baggage, check-in, transit) | RAG (TDD-04) |
+
+> Notes: **baggage** is arrival-only (AirLabs `arr_baggage`); **check-in** is not in
+> AirLabs → served from the KB. `directions` returns the route **as map nodes +
+> positions** so the frontend can draw the airport-map polyline (TDD-07).
 
 ### 3.1 Schemas (JSON-schema-style, used for LLM tool-calling)
 
 ```jsonc
 flight_status: {
-  "args": { "flight_number": "string (IATA/ICAO, e.g. SV624)" },
+  "args": { "flight_number": "string (IATA, e.g. SV624)", "airport_id": "AUH" },
   "returns": {
-    "flight_number": "SV624", "status": "scheduled|active|landed|cancelled|delayed",
-    "scheduled_departure": "ISO8601", "estimated_departure": "ISO8601|null",
-    "gate": "B12|null", "terminal": "T1|null", "delay_minutes": 0,
-    "departure_airport": "AUH", "arrival_airport": "string", "source": "aviationstack"
+    "flight_number": "SV624", "airline": "SV", "status": "scheduled|active|landed|cancelled",
+    "direction": "departure|arrival",        // which side matches airport_id
+    "scheduled": "ISO8601", "estimated": "ISO8601|null", "actual": "ISO8601|null",
+    "gate": "B12|null", "terminal": "A|null", "baggage": "10|null (arrivals only)",
+    "delay_minutes": 0, "departure_airport": "AUH", "arrival_airport": "string",
+    "aircraft": "A320|null", "source": "airlabs"
+  }
+}
+
+directions: {
+  "args": { "from_node": "entrance|<position>", "to_node": "gate-b12",
+            "airport_id": "AUH" },
+  "returns": {
+    "steps": ["Head to ...", "..."],
+    "route": ["entrance", "check-in", "security", "duty-free", "gate-b12"],
+    "positions": { "entrance": {"x": 8, "y": 54}, "...": {} },   // for the map
+    "route_summary": { "distance_m": 525, "walking_time_min": 7 }
   }
 }
 
@@ -48,38 +65,46 @@ find_service: {
                "level": "Departures", "open_hours": "...", "distance_hint": "..." } ] }
 }
 
-directions: {
-  "args": { "from_zone": "string", "to_zone": "string", "airport_id": "AUH" },
-  "returns": { "steps": ["Head to ...", "Take elevator to ...", "..."],
-               "est_walk_minutes": 6 }
-}
-
 faq: {
   "args": { "question": "string", "airport_id": "AUH" },
   "returns": { "answer": "string", "sources": ["kb://AUH/faq/baggage"] }
 }
 ```
 
-## 4. Flight data integration
+## 4. Flight data integration — AirLabs (v9)
 
-- **Provider:** AviationStack (default) or AeroDataBox; chosen via
-  `FLIGHT_API_PROVIDER`. Adapter pattern → one `FlightProvider` interface, one
-  implementation per vendor, so we can swap without touching tools.
+**Provider: AirLabs** (`https://airlabs.co/api/v9`), chosen via
+`FLIGHT_API_PROVIDER=airlabs`. Kept behind a `FlightProvider` adapter so a vendor
+swap never touches the tools. **Verified live on a free key (2026-06-21).**
+
 - **Interface:**
   ```python
   class FlightProvider(Protocol):
       def get_flight(self, flight_number: str) -> FlightStatus | None: ...
   ```
-- **Caching:** per-flight result cached `FLIGHT_CACHE_TTL` (default 120 s) to
-  respect free-tier rate limits.
-- **Normalization:** vendor responses mapped to the canonical `flight_status`
-  return schema above. Missing gate/terminal → `null` (common on free tiers).
-- **Errors:** network/quota errors raise `ToolUnavailable`; the agent degrades
-  gracefully (TDD-00 §6) and tells the user data is temporarily unavailable.
-
-> ⚠️ Verify the chosen provider actually returns **gate/terminal** for AUH on the
-> free tier; many only return status. If gates are unavailable live, the demo can
-> fall back to KB-seeded gate data for the case-study flights.
+- **Primary call:** `GET /flight?flight_iata={code}&api_key=…` — single-flight
+  lookup by the **typed** flight number (TDD-00 "identity over inference"). Returns
+  `dep_terminal`, `dep_gate`, `arr_terminal`, `arr_gate`, `arr_baggage`, `status`,
+  scheduled/estimated/actual times, `dep_delayed`/`arr_delayed`, airline, aircraft.
+- **Board call (secondary):** `GET /schedules?dep_iata=AUH` / `arr_iata=AUH` for
+  "departures/arrivals at AUH" queries and for `*_actual` times. `GET /airlines`,
+  `GET /airports` enrich/validate codes (static — cache for days).
+- **Airport scoping in code:** `/flight` has **no** airport filter, so after the
+  lookup we compare `dep_iata`/`arr_iata` against `airport_id` (default `AUH`) to
+  pick the departure vs arrival view, or report "this flight doesn't touch AUH".
+- **Caching (mandatory):** free tier is only **1,000 req/month** (250/min,
+  2,500/hr). Cache `/flight` & `/schedules` for `FLIGHT_CACHE_TTL` (default 60 s)
+  keyed by flight number / airport+direction; cache static DBs for days.
+- **Security:** the AirLabs response **echoes the `api_key`** in `response.request.key`
+  — the backend MUST strip the `request`/meta block before returning to the FE. The
+  key lives server-side only (`AIRLABS_API_KEY`), never in the frontend.
+- **Coverage / nulls:** on live AUH departures `dep_terminal` ~98%, `dep_gate` ~89%,
+  `status` 100%; `arr_baggage` is **arrival-only** (~35%). Missing fields → `null`;
+  the card/map degrade gracefully (route to terminal when gate is unknown).
+- **No check-in field:** AirLabs has none → check-in zone comes from the KB
+  (TDD-04), keyed by `airport_id`.
+- **Errors:** network/quota (`minute_limit_exceeded` / `hour_…` / `month_…`) raise
+  `ToolUnavailable`; the agent degrades gracefully (TDD-00 §6).
 
 ## 5. Interfaces & data contracts
 
@@ -91,19 +116,23 @@ faq: {
 ## 6. Dependencies
 
 `httpx`/`requests` (API calls), `pydantic` (arg/result validation), KB client
-(TDD-04). Env: `FLIGHT_API_PROVIDER`, `FLIGHT_API_KEY`, `FLIGHT_CACHE_TTL`.
+(TDD-04). Env: `FLIGHT_API_PROVIDER=airlabs`, `AIRLABS_API_KEY` (server-side only),
+`FLIGHT_CACHE_TTL` (default 60 s).
 
 ## 7. Open questions / risks
 
-- Free-tier **gate coverage** at AUH (see §4 warning).
-- Flight-number normalization (IATA `SV624` vs ICAO `SVA624`, spaces/dashes).
-- Rate limits → caching + a mock provider for offline dev/tests.
+- **1,000 req/month free cap** → aggressive caching; consider a paid tier for the
+  live demo, or pre-warm a cache of the case-study flights.
+- Flight-number normalization (strip spaces/dashes, uppercase → `flight_iata`).
+- Mock provider for offline dev/tests (the suite must never call AirLabs).
+- Gate/baggage `null` for some flights → route to terminal; never fail the turn.
 
 ## 8. Task checklist
 
-- [ ] `FlightProvider` interface + AviationStack adapter + mock provider
-- [ ] Normalization to canonical schema + tests
+- [ ] `FlightProvider` interface + **AirLabs** adapter + mock provider
+- [ ] Normalization to canonical schema (+ airport scoping by `airport_id`) + tests
+- [ ] Strip AirLabs `request`/meta (key echo) before returning upstream
 - [ ] `flight_status` / `find_gate` tools
-- [ ] `find_service` / `directions` / `faq` tools over KB (after TDD-04)
+- [ ] `find_service` / `directions` (route + positions + summary) / `faq` over KB
 - [ ] Tool registry + JSON schemas for the agent
 - [ ] Caching + graceful-degradation errors

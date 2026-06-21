@@ -53,6 +53,8 @@ input ─▶│ detect_lang  │
 class AgentState(TypedDict):
     session_id: str
     airport_id: str          # default "AUH"
+    flight_number: str | None  # typed by the user (NOT parsed from STT) — TDD-00
+    position: str | None       # user's current node in the airport map (TDD-04)
     language: str            # ar | ary | fr | en
     messages: list[Message]  # running conversation
     tool_trace: list[ToolCall]
@@ -75,18 +77,22 @@ a second owned model — see TDD-08 metrics).
 
 ```python
 def run_agent(text: str, session_id: str, airport_id: str = "AUH",
-              language: str | None = None) -> AgentResult
+              language: str | None = None, flight_number: str | None = None,
+              position: str | None = None) -> AgentResult
 ```
 ```jsonc
-// AgentResult
+// AgentResult — may carry structured flight/route payloads for the UI dashboard
 {
-  "answer": "Your gate is B12, Terminal 1. Boarding at 14:35.",
+  "answer": "Your gate is B12, Terminal A. Boarding from the South Pier.",
   "language": "en",
   "intent": "find_gate",
   "tool_trace": [
-    {"tool": "flight_status", "args": {"flight": "SV-624"},
-     "result": {"gate": "B12", "terminal": "T1", "boarding": "14:35"}}
-  ]
+    {"tool": "flight_status", "args": {"flight_number": "SV624", "airport_id": "AUH"},
+     "result": {"gate": "B12", "terminal": "A", "status": "scheduled", "source": "airlabs"}}
+  ],
+  "flight": { "flight_number": "SV624", "gate": "B12", "terminal": "A", "status": "scheduled" },
+  "route":  { "route": ["entrance","check-in","security","duty-free","gate-b12"],
+              "route_summary": { "distance_m": 525, "walking_time_min": 7 } }
 }
 ```
 - Tool schemas: TDD-03. Session/history storage: TDD-06.
@@ -101,7 +107,9 @@ def run_agent(text: str, session_id: str, airport_id: str = "AUH",
 - **Hosted vs self-hosted LLM** — impacts cost/privacy and the "owned model"
   narrative; Whisper remains the primary owned model regardless.
 - **Darija understanding by the LLM** — GPT-4o-mini handles Arabic well; Darija is
-  weaker. Mitigate with examples; consider the fine-tuned intent classifier.
+  weaker. Mitigate with examples; consider the fine-tuned intent classifier. Note:
+  the **flight number is a typed field, not parsed from speech** (TDD-00 "identity
+  over inference"), so flight lookups never depend on the LLM/STT reading a code.
 - **Tool-loop cost/latency** — cap hops; cache flight lookups per session.
 - **Language consistency** — enforce reply-language in `compose_answer` + a guard.
 

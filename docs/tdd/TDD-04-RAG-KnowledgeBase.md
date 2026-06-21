@@ -26,10 +26,24 @@ Airport data lives under `knowledge_base/data/<airport_id>/`:
 data/AUH/
 ├── airport.yaml        # metadata: name, terminals, timezone, languages
 ├── services.yaml       # list of services (type, name, zone, level, hours)
-├── layout.yaml         # zones, connections (graph) for directions
+├── checkin.yaml        # check-in zones/desks per airline/terminal (AirLabs has none)
+├── layout.yaml         # map graph: nodes, positions (x,y %), edges w/ distances
 └── faq/                # markdown docs: baggage.md, checkin.md, transit.md, ...
 ```
 Each record carries `airport_id` so collections can be multi-airport or per-airport.
+
+**`layout.yaml`** is the airport-map model that powers both `directions` (TDD-03)
+and the frontend map (TDD-07). It holds:
+```yaml
+nodes:        { entrance: "Main entrance", "gate-b12": "Gate B12", ... }
+positions:    { entrance: {x: 8, y: 54}, "gate-b12": {x: 78, y: 43}, ... }  # % coords
+edges:        { security: [ {to: duty-free, distance_m: 85}, ... ], ... }
+gate_nodes:   { B12: "gate-b12", ... }      # AirLabs gate code → graph node
+baggage_nodes:{ "10": "baggage-10", ... }   # AirLabs arr_baggage → graph node
+```
+The **AUH layout is seeded from the teammate's SkyGuide `airport_map.json` +
+edge-distance table** (reused as data, not code), then kept airport-agnostic under
+`data/AUH/`. `checkin.yaml` fills the gap AirLabs leaves (no check-in field).
 
 ### 3.2 Ingestion pipeline
 ```
@@ -81,14 +95,19 @@ Consumed by `find_service`, `directions`, `faq` tools (TDD-03).
   multilingual embedder; optionally translate query to MSA before embed.
 - **AUH data sourcing** — assemble services/layout/FAQ from public info; mark
   approximations clearly (it's a case-study demo, not an official dataset).
-- **`directions` as graph vs RAG** — layout is better as a small graph (BFS)
-  than pure RAG; KB stores the graph, `directions` runs pathfinding.
+- **`directions` as graph vs RAG** — layout is better as a small graph (BFS/
+  Dijkstra) than pure RAG; KB stores the graph (nodes/positions/edge distances),
+  `directions` runs pathfinding and returns `route` + `positions` + `route_summary`
+  ({distance_m, walking_time_min}) so the frontend can draw the map polyline.
 
 ## 7. Task checklist
 
-- [ ] Define YAML schemas (airport/services/layout) + FAQ markdown
-- [ ] Author AUH data pack (case study)
+- [ ] Define YAML schemas (airport/services/checkin/layout) + FAQ markdown
+- [ ] `layout.yaml`: nodes + positions (x,y %) + edges w/ distances + gate/baggage
+      node maps — **seed AUH from SkyGuide `airport_map.json`**
+- [ ] `checkin.yaml` for AUH (fills the AirLabs check-in gap)
+- [ ] Author rest of AUH data pack (services, FAQ)
 - [ ] `ingest.py` (chunk + embed + ChromaDB) with `airport_id` metadata
 - [ ] `retrieve()` with airport/type filters
-- [ ] `directions` pathfinding over layout graph
+- [ ] `directions` pathfinding → `route` + `positions` + `route_summary`
 - [ ] Second-airport fixture test (agnostic guarantee)

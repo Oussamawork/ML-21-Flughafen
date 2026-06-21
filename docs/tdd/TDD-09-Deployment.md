@@ -28,9 +28,9 @@ configuration/secrets, and deploy to a PaaS for the live demo.
 
 ### 3.2 Configuration & secrets
 - All config via env vars (`.env.example` committed, real `.env` git-ignored):
-  `LLM_PROVIDER`, `OPENAI_API_KEY`/`GROQ_API_KEY`, `FLIGHT_API_PROVIDER`,
-  `FLIGHT_API_KEY`, `TTS_PROVIDER`, `TTS_API_KEY`, `WHISPER_MODEL_PATH`,
-  `KB_PERSIST_DIR`, `AIRPORT_ID`.
+  `LLM_PROVIDER`, `OPENAI_API_KEY`/`GROQ_API_KEY`, `FLIGHT_API_PROVIDER` (=`airlabs`),
+  `AIRLABS_API_KEY`, `FLIGHT_CACHE_TTL`, `TTS_PROVIDER`, `TTS_API_KEY`,
+  `WHISPER_MODEL`, `LOAD_STT`, `KB_PERSIST_DIR`, `AIRPORT_ID` (default `AUH`).
 - The fine-tuned Whisper checkpoint: pulled from HF Hub at boot or baked into the
   image (size trade-off documented).
 

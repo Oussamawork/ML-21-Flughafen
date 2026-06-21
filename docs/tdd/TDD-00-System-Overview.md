@@ -54,23 +54,29 @@ From `../../PROJECT_REQUIREMENTS.md` and `../Proposition_Projet_Wayfinding.md`:
                                    └────┬───────────────────────────┘
                                         │ external
                                    ┌────▼─────────┐
-                                   │ Flight Data  │ (AviationStack / AeroDataBox)
+                                   │ Flight Data  │ (AirLabs v9)
                                    │     API      │
                                    └──────────────┘
 ```
 
 ## 4. End-to-end request flow (voice example)
 
+0. **Context** — the UI carries structured fields the assistant should never have
+   to guess from speech: the **flight/ticket number** (typed, not parsed from
+   audio — see cross-cutting rules), the **`airport_id`** (default `AUH`), and the
+   user's **current position** in the terminal (TDD-07).
 1. **Capture** — user speaks; the web UI streams/uploads audio (TDD-07).
 2. **STT** — `POST /transcribe` → fine-tuned Whisper returns text + detected
    language (TDD-01).
-3. **Agent** — `POST /chat` with the text. The LLM agent detects intent and
-   decides which tool(s) to call (TDD-02).
-4. **Tools / RAG** — agent calls e.g. `flight_status("SV-624")` and/or retrieves
-   from the airport KB (TDD-03, TDD-04).
+3. **Agent** — `POST /chat` with the text **plus the structured context** above.
+   The LLM agent detects intent and decides which tool(s) to call (TDD-02).
+4. **Tools / RAG** — agent calls `flight_status(flight_number)` (live data from
+   **AirLabs**, TDD-03), `directions(from=position, to=gate)` for a route over the
+   airport map graph, and/or retrieves FAQ/services/check-in from the KB (TDD-04).
 5. **Compose** — agent writes a contextual answer in the passenger's language.
 6. **TTS** — `POST /speak` converts the answer to audio in that language (TDD-05).
-7. **Respond** — text + audio returned to the UI; audio auto-plays.
+7. **Respond** — text + audio + a **structured flight/route payload** returned to
+   the UI (flight card + airport map); audio auto-plays.
 
 The synchronous path is also available over a single **WebSocket** session for
 low-latency, turn-based interaction (TDD-06).
@@ -80,7 +86,7 @@ low-latency, turn-based interaction (TDD-06).
 | Component | Input | Output | TDD |
 |---|---|---|---|
 | STT | audio bytes (wav/mp3) | `{text, language}` | 01 |
-| Agent | `{text, language?, session_id}` | `{answer, language, tool_trace[]}` | 02 |
+| Agent | `{text, language?, session_id, flight_number?, airport_id, position?}` | `{answer, language, tool_trace[], flight?, route?}` | 02 |
 | Tools | typed args (per tool schema) | typed JSON result | 03 |
 | RAG | `{query, airport_id, k}` | `{chunks[], sources[]}` | 04 |
 | TTS | `{text, language}` | audio bytes (mp3) | 05 |
@@ -96,8 +102,14 @@ Full schemas live in each component TDD.
 - **Airport-agnostic.** No airport facts are hard-coded. All airport-specific
   data lives in the KB keyed by `airport_id` (default `AUH`). Adding an airport =
   adding a data pack + config, no code changes (TDD-04).
+- **Identity over inference.** Hard identifiers the user can state exactly — the
+  **flight/ticket number**, the `airport_id`, the current position — are passed as
+  **structured fields**, never extracted from ASR output. Speech recognition is
+  lossy on codes like `SV624` in Darija; typing them is reliable. The agent grounds
+  flight facts on the typed number, not on what STT heard.
 - **Config over code.** Models, API keys, airport id, and thresholds come from
-  environment variables / config files, never literals.
+  environment variables / config files, never literals. Provider secrets (e.g. the
+  AirLabs `api_key`) live server-side only and never reach the frontend.
 - **Stateless services, session at the edge.** Components are stateless; session
   context (history, language, airport) is held by the backend keyed by
   `session_id`.
@@ -135,7 +147,7 @@ ML-21-Flughafen/
 | LLM | GPT-4o-mini or Llama 3.1 (Groq) | Cheap, fast, tool-calling capable. |
 | RAG store | ChromaDB | Lightweight, local, no infra. |
 | TTS | ElevenLabs / Azure Speech | High-quality multilingual voices. |
-| Flight data | AviationStack / AeroDataBox | Live flight status + gates. |
+| Flight data | **AirLabs (v9)** | Live status/gate/terminal/baggage by flight number; verified free tier. |
 | Backend | FastAPI + WebSockets | Async, typed, real-time. |
 | Frontend | Next.js / React | Voice UI + chat demo. |
 | Deploy | Docker → Railway/Render | Reproducible, simple PaaS. |
@@ -169,5 +181,6 @@ ML-21-Flughafen/
 - Final LLM choice (hosted GPT-4o-mini vs. self-hosted Llama) — affects cost,
   privacy, and the "owned model" story. Decided in TDD-02.
 - Darija dataset availability for Whisper — see TDD-01.
-- Flight API free-tier limits (rate, gate coverage at AUH) — see TDD-03.
+- Flight API resolved → **AirLabs** (gate/terminal coverage good on free tier);
+  the live risk is now the **1,000 req/month** free cap — see TDD-03.
 - Real-time audio over WebSocket vs. simple request/response — see TDD-06.
