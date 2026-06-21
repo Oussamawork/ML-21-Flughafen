@@ -1,7 +1,7 @@
 # TDD-08 — Evaluation & Testing
 
 **Component:** `evaluation/`
-**Status:** ⚪ Not started
+**Status:** 🟡 In progress — ASR result recorded (WER 108.18%→28.79%); other axes pending
 **Depends on:** all components · **Feeds:** report + demo video
 
 ---
@@ -23,6 +23,15 @@ produce the tables/figures for the report and video.
 - **WER / CER** on a held-out Darija/Arabic test set.
 - **Base vs. fine-tuned** comparison table (the headline number).
 - Tooling: `asr_finetuning/src/evaluate_model.py` (TDD-01).
+
+**Result (2026-06-21, `Amassu/whisper-small-darija`, DODa held-out, 1,259 samples):**
+
+| Metric | Base whisper-small | Fine-tuned | Relative ↓ |
+|---|---|---|---|
+| WER | 108.18% | **28.79%** | 73.4% |
+| CER | 63.76% | **9.63%** | 84.9% |
+
+Full write-up + qualitative before/after: [`../RESULTS_TDD-01.md`](../RESULTS_TDD-01.md).
 
 ### 3.2 Comprehension / intent accuracy
 - Curated test set of ~50–100 passenger utterances (ar/ary/fr/en) labeled with

@@ -16,7 +16,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Component | TDD | Status | Notes |
 |---|---|---|---|
 | System overview / architecture | TDD-00 | 🟢 | Design written |
-| STT — fine-tuned Whisper | TDD-01 | 🟡 | Pipeline built; DODa wired; smoke test passes (CPU); **full GPU train pending** |
+| STT — fine-tuned Whisper | TDD-01 | 🟢 | **Fine-tuned: WER 108→28.8%, CER 64→9.6%** (DODa); pushed to `Amassu/whisper-small-darija`. Pending: wire into backend (`LOAD_STT=true`) |
 | LLM agent (LangGraph) | TDD-02 | ⚪ | Designed |
 | Agent tools + flight API | TDD-03 | ⚪ | Designed |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
@@ -44,6 +44,9 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - **2026-06-20** Workflow: **one branch + one PR per TDD/component** going
   forward. Each implementation gets a dedicated branch off `main`
   (e.g. `feat/tdd-06-backend`) with its own scoped PR. Merged TDD docs stay as-is.
+- **2026-06-21** ✅ **TDD-01 fine-tune complete.** `whisper-small` on DODa:
+  WER 108.18%→28.79%, CER 63.76%→9.63% (1,259-sample sentence-grouped held-out).
+  The owned ML contribution is now a measured, strong result.
 
 ## 3. Open questions / to resolve
 
@@ -122,6 +125,16 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - Verified locally: `tsc --noEmit` clean + `next build` green (4 static pages).
 - Branch `feat/tdd-07-frontend`. PR #8. **Next:** end-to-end demo now backend is
   merged; wire real STT/agent/TTS as they land; optional WebSocket streaming.
+
+### Session 2026-06-21 (cont.) — TDD-01 fine-tune results
+- Fine-tune finished on a Colab T4 (3000 steps). Recorded base-vs-fine-tuned eval
+  on the DODa held-out set (1,259 samples): **WER 108.18%→28.79%, CER 63.76%→9.63%**
+  (73%/85% relative). Base model emitted wrong scripts (Chinese/Hindi) on Darija;
+  fine-tuned transcribes correctly.
+- Saved `docs/RESULTS_TDD-01.md` (presentation-ready) + `asr_finetuning/MODEL_CARD.md`
+  (HF card). Updated TDD-08, TDD-01 checklist. Branch `feat/tdd-01-eval-results`.
+- **Pending:** user to push model to `Amassu/whisper-small-darija`; then wire into
+  backend via `LOAD_STT=true`. Optional: training curve from `trainer_state.json`.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
