@@ -5,7 +5,7 @@ Update this at the end of every working session so any future session (human or
 AI) can resume without re-reading everything.
 
 **Project:** Multilingual Smart Airport Wayfinding Assistant (case study: AUH)
-**Branch:** `fix/tdd-01-doda-loader-smoke`
+**Branch:** `feat/tdd-06-backend`
 
 ---
 
@@ -21,7 +21,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Agent tools + flight API | TDD-03 | ⚪ | Designed |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
-| Backend API (FastAPI) | TDD-06 | ⚪ | Designed |
+| Backend API (FastAPI) | TDD-06 | 🟡 | Skeleton built with offline stubs; 11 tests passing; awaiting real STT/agent/TTS |
 | Frontend (Next.js) | TDD-07 | ⚪ | Designed |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
@@ -88,12 +88,29 @@ M5 Eval+Deploy. → Currently inside **M1**.
 - Branch `feat/tdd-01-colab-notebook`. **Next:** run it on a T4 to get the
   base-vs-fine-tuned WER, then wire `WhisperTranscriber` into TDD-06.
 
+### Session 2026-06-20 (cont.) — TDD-06 backend skeleton
+- PR #5 (notebook) merged. Started backend on `feat/tdd-06-backend`.
+- Built FastAPI app: `/health`, `/airports`, `/transcribe`, `/chat`, `/speak`,
+  `/converse` (STT→agent→TTS + per-stage latency), `/audio/{id}`, `WS /ws/{id}`;
+  in-memory session store with TTL; CORS; OpenAPI docs.
+- STT/agent/TTS are interfaces with **offline stubs** so it runs with no GPU/keys:
+  stub STT returns a Darija sample, stub agent does intent + a mock flight tool
+  (SV624→gate B12), stub TTS returns a silent WAV. Real impls swap in per TDD.
+- `pytest`: **11 tests passing** (incl. full `/converse` + WebSocket).
+- Wired `WhisperSTT` adapter (lazy) for when `LOAD_STT=true` post-training.
+- **Next:** real Whisper once the checkpoint exists; then TDD-02 agent / TDD-07
+  frontend can consume this API.
+
 ### Session 2026-06-21 — TDD-01 loader + smoke-test fixes
 - Fixed DODa load crash: filter ~22 null `darija_Arab_new` rows before grouped split.
 - Hardened audio loading (`decode=False` + soundfile/librosa) for Mac CPU / no FFmpeg.
 - Pointed `scripts/smoke_test.sh` at DODa (Common Voice 17 broken on `datasets>=4`).
 - Updated Colab notebook clone cell (git pull + hotfix). Smoke test verified locally.
 - Branch `fix/tdd-01-doda-loader-smoke`. **Next:** full fine-tune on Colab T4.
+
+### Session 2026-06-21 (cont.) — merge main into TDD-06 backend
+- Merged the TDD-01 loader/smoke fixes (PR #7) into `feat/tdd-06-backend`;
+  resolved the PROGRESS session-log conflict (kept both entries).
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

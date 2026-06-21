@@ -1,7 +1,7 @@
 # TDD-06 — Backend REST API & WebSockets
 
 **Component:** `backend/`
-**Status:** ⚪ Not started
+**Status:** 🟡 In progress (skeleton built with offline stubs; tests passing)
 **Depends on:** TDD-01, TDD-02, TDD-05 · **Consumed by:** TDD-07 (frontend)
 
 ---
@@ -84,9 +84,16 @@ components (TDD-01/02/05). Env: model paths, provider keys, `LOAD_STT`,
 
 ## 7. Task checklist
 
-- [ ] FastAPI app + lifespan model loading + `/health`
-- [ ] `/transcribe`, `/chat`, `/speak`
-- [ ] `/converse` one-shot pipeline + per-stage timing
-- [ ] `WS /ws/{session_id}`
-- [ ] Session store + TTL
-- [ ] Pydantic schemas + OpenAPI docs + CORS
+- [x] FastAPI app + lifespan service loading + `/health`
+- [x] `/transcribe`, `/chat`, `/speak`
+- [x] `/converse` one-shot pipeline + per-stage timing
+- [x] `WS /ws/{session_id}`
+- [x] Session store + TTL
+- [x] Pydantic schemas + OpenAPI docs + CORS
+- [x] Offline stubs (STT/agent/TTS) + end-to-end tests (`pytest`, 11 passing)
+- [ ] Swap stub STT → fine-tuned Whisper (`LOAD_STT`, after TDD-01 checkpoint)
+- [ ] Swap stub agent → LangGraph (TDD-02) and stub TTS → provider (TDD-05)
+
+> **Implementation note:** STT/agent/TTS are interfaces in `app/services/` with
+> offline stubs, so the API runs with no GPU/keys. The agent stub does simple
+> intent + a mock flight tool; replace behind the same `run()` signature.

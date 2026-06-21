@@ -1,0 +1,9 @@
+# Backend runtime (TDD-06). Deliberately light — the STT model (torch) is only
+# imported when LOAD_STT=true, so it is NOT a hard dependency here.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+python-multipart>=0.0.9   # multipart/form-data for audio uploads
+
+# Optional, only needed when LOAD_STT=true (real Whisper):
+#   pip install -r ../asr_finetuning/requirements.txt

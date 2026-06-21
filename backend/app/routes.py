@@ -1,0 +1,189 @@
+"""HTTP + WebSocket routes orchestrating STT -> agent -> TTS (TDD-06)."""
+
+from __future__ import annotations
+
+import base64
+import logging
+import time
+from contextlib import contextmanager
+
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, WebSocket
+from fastapi.responses import Response
+from starlette.websockets import WebSocketDisconnect
+
+from . import __version__
+from .config import settings
+from .schemas import (
+    AirportsResponse,
+    ChatRequest,
+    ChatResponse,
+    ConverseResponse,
+    HealthResponse,
+    SpeakRequest,
+    ToolCall,
+    TranscribeResponse,
+)
+from .services import audio_store
+from .sessions import store as session_store
+from .state import get_services
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+
+@contextmanager
+def _timed(bucket: dict[str, float], name: str):
+    start = time.perf_counter()
+    try:
+        yield
+    finally:
+        bucket[name] = round((time.perf_counter() - start) * 1000, 1)
+
+
+def _run_agent_turn(text: str, session, language: str | None) -> ChatResponse:
+    """Shared agent step used by /chat, /converse and the WebSocket."""
+    services = get_services()
+    latency: dict[str, float] = {}
+    session.add("user", text)
+    with _timed(latency, "agent"):
+        reply = services.agent.run(
+            text=text,
+            language=language or session.language,
+            airport_id=session.airport_id,
+            history=session.messages,
+        )
+    session.language = reply.language
+    session.add("assistant", reply.answer)
+    return ChatResponse(
+        answer=reply.answer,
+        language=reply.language,
+        intent=reply.intent,
+        tool_trace=[ToolCall(**tc) for tc in reply.tool_trace],
+        session_id=session.session_id,
+        latency_ms=latency,
+    )
+
+
+@router.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    services = get_services()
+    return HealthResponse(
+        version=__version__,
+        stt_loaded=services.stt_loaded,
+        agent_backend=settings.agent_backend,
+        tts_provider=settings.tts_provider,
+    )
+
+
+@router.get("/airports", response_model=AirportsResponse)
+def airports() -> AirportsResponse:
+    # Until the KB (TDD-04) lists installed airport packs, expose the configured one.
+    return AirportsResponse(
+        airports=[settings.default_airport_id], default=settings.default_airport_id
+    )
+
+
+@router.post("/transcribe", response_model=TranscribeResponse)
+async def transcribe(
+    audio: UploadFile = File(...), session_id: str | None = Form(default=None)
+) -> TranscribeResponse:
+    services = get_services()
+    raw = await audio.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty audio upload.")
+    text, language = services.stt.transcribe(raw, audio.filename)
+    session = session_store.get_or_create(session_id)
+    session.language = language
+    return TranscribeResponse(
+        text=text, language=language, session_id=session.session_id
+    )
+
+
+@router.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest) -> ChatResponse:
+    session = session_store.get_or_create(req.session_id, req.airport_id)
+    return _run_agent_turn(req.text, session, req.language)
+
+
+@router.post("/speak")
+def speak(req: SpeakRequest) -> Response:
+    services = get_services()
+    audio, content_type = services.tts.synthesize(req.text, req.language)
+    return Response(content=audio, media_type=content_type)
+
+
+@router.post("/converse", response_model=ConverseResponse)
+async def converse(
+    audio: UploadFile = File(...), session_id: str | None = Form(default=None)
+) -> ConverseResponse:
+    """One-shot voice pipeline: STT -> agent -> TTS, with per-stage timings."""
+    services = get_services()
+    latency: dict[str, float] = {}
+
+    raw = await audio.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty audio upload.")
+
+    with _timed(latency, "stt"):
+        text_in, language = services.stt.transcribe(raw, audio.filename)
+
+    session = session_store.get_or_create(session_id)
+    chat_resp = _run_agent_turn(text_in, session, language)
+    latency.update(chat_resp.latency_ms)
+
+    with _timed(latency, "tts"):
+        clip, content_type = services.tts.synthesize(
+            chat_resp.answer, chat_resp.language
+        )
+    audio_id = audio_store.store.put(clip, content_type)
+
+    return ConverseResponse(
+        text_in=text_in,
+        answer=chat_resp.answer,
+        language=chat_resp.language,
+        intent=chat_resp.intent,
+        audio_url=f"/audio/{audio_id}",
+        session_id=session.session_id,
+        tool_trace=chat_resp.tool_trace,
+        latency_ms=latency,
+    )
+
+
+@router.get("/audio/{audio_id}")
+def get_audio(audio_id: str) -> Response:
+    item = audio_store.store.get(audio_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Audio not found or expired.")
+    audio, content_type = item
+    return Response(content=audio, media_type=content_type)
+
+
+@router.websocket("/ws/{session_id}")
+async def ws(websocket: WebSocket, session_id: str) -> None:
+    """Turn-based real-time channel. Client sends {type:'text'|'audio', ...}."""
+    await websocket.accept()
+    services = get_services()
+    session = session_store.get_or_create(session_id)
+    try:
+        while True:
+            msg = await websocket.receive_json()
+            mtype = msg.get("type")
+            if mtype == "text":
+                text = msg.get("data", "")
+            elif mtype == "audio":
+                raw = base64.b64decode(msg.get("data", ""))
+                text, _ = services.stt.transcribe(raw)
+                await websocket.send_json({"type": "transcript", "text": text})
+            else:
+                await websocket.send_json({"type": "error", "detail": "unknown type"})
+                continue
+
+            resp = _run_agent_turn(text, session, msg.get("language"))
+            await websocket.send_json({"type": "answer", **resp.model_dump()})
+    except WebSocketDisconnect:
+        return  # normal client disconnect ends the loop
+    except Exception:
+        # A real bug (not a disconnect): log it and close cleanly so it surfaces.
+        logger.exception("WebSocket handler failed for session %s", session_id)
+        await websocket.close(code=1011)
