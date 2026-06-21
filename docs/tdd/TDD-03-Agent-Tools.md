@@ -1,7 +1,7 @@
 # TDD-03 — Agent Tools & Flight Data Integration
 
-**Component:** `agent/tools/`
-**Status:** ⚪ Not started
+**Component:** `agent/tools/` (flight provider lives in `backend/app/services/flight.py` for now)
+**Status:** 🟡 In progress — AirLabs flight provider + `/flight` built & live-verified; KB tools pending
 **Depends on:** TDD-04 (KB for FAQ/services/layout/check-in), **AirLabs API** (flight data)
 **Consumed by:** TDD-02 (agent), TDD-06 (`/flight` endpoint)
 
@@ -129,10 +129,13 @@ swap never touches the tools. **Verified live on a free key (2026-06-21).**
 
 ## 8. Task checklist
 
-- [ ] `FlightProvider` interface + **AirLabs** adapter + mock provider
-- [ ] Normalization to canonical schema (+ airport scoping by `airport_id`) + tests
-- [ ] Strip AirLabs `request`/meta (key echo) before returning upstream
-- [ ] `flight_status` / `find_gate` tools
+- [x] `FlightProvider` interface + **AirLabs** adapter + mock provider
+      (`backend/app/services/flight.py`; default `mock` so it runs offline)
+- [x] Normalization to canonical schema (+ airport scoping by `airport_id`) + tests
+- [x] Strip AirLabs `request`/meta (key echo); send a `User-Agent` (AirLabs 403s
+      the default urllib UA — found via live test)
+- [x] Caching (TTL) + graceful `FlightUnavailable` on quota/network errors
+- [x] `POST /flight` endpoint (TDD-06) consuming the provider; **live-verified**
+- [ ] `flight_status` / `find_gate` exposed as **agent tools** (with TDD-02)
 - [ ] `find_service` / `directions` (route + positions + summary) / `faq` over KB
-- [ ] Tool registry + JSON schemas for the agent
-- [ ] Caching + graceful-degradation errors
+- [ ] Tool registry + JSON schemas for the agent (TDD-02)

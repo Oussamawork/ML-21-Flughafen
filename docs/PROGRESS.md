@@ -18,7 +18,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | System overview / architecture | TDD-00 | 🟢 | Design written |
 | STT — fine-tuned Whisper | TDD-01 | 🟢 | **Fine-tuned: WER 108→28.8%, CER 64→9.6%** (DODa); pushed to `Amassu/whisper-small-darija`; wired into TDD-06 backend (`LOAD_STT=true`) |
 | LLM agent (LangGraph) | TDD-02 | ⚪ | Designed |
-| Agent tools + flight API | TDD-03 | ⚪ | Designed |
+| Agent tools + flight API | TDD-03 | 🟡 | AirLabs flight provider + `/flight` built (mock default; live-verified); KB tools (services/directions/faq) pending |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
 | Backend API (FastAPI) | TDD-06 | 🟡 | Stubs + real STT wired (`LOAD_STT=true` → fine-tuned Whisper); 14 tests passing; awaiting real agent/TTS |
@@ -191,6 +191,18 @@ M5 Eval+Deploy. → Currently inside **M1**.
   TDD-06 (request contract + `/flight` & `/map` endpoints), TDD-07 (dashboard).
 - **Next:** build order — TDD-03 (AirLabs flight tool, de-risked) then TDD-02
   (agent), then TDD-04 (KB+map) and the TDD-07 dashboard.
+
+### Session 2026-06-21 (cont.) — TDD-03 AirLabs flight tool
+- Built the flight provider in `backend/app/services/flight.py`: `FlightProvider`
+  interface, `AirLabsProvider` (real `/flight` lookup, normalized, airport-scoped,
+  TTL cache, meta stripped) and `MockFlightProvider` (default → offline/tests).
+- Added `POST /flight` (TDD-06), `FlightRequest`/`FlightInfo`/`FlightResponse`
+  schemas, config (`FLIGHT_API_PROVIDER`/`AIRLABS_API_KEY`/`FLIGHT_CACHE_TTL`).
+- **Live-verified** against AirLabs with the real key (EK201 normalized correctly).
+  Found + fixed a real bug: AirLabs **403s the default urllib User-Agent** → set one.
+- `pytest`: **25 passing** (mock provider, normalization, dep/arr scoping, caching,
+  graceful errors, endpoint 200/404/503). Branch `feat/tdd-03-flight-tool`.
+- **Next:** TDD-02 agent (expose `flight_status` as a tool) + TDD-04 KB/map (route).
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
