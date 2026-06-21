@@ -62,3 +62,18 @@ def test_health_reports_stt_loaded(whisper_backend):
     with TestClient(app) as c:
         r = c.get("/health")
     assert r.json()["stt_loaded"] is True
+
+
+def test_transcribe_returns_400_on_undecodable_audio(whisper_backend, monkeypatch):
+    # Browser uploads (webm) the decoder can't read should be a clean 400, not 500.
+    def _boom(audio):
+        raise stt_module.AudioDecodeError("Format not recognised")
+
+    monkeypatch.setattr(stt_module, "_decode_audio", _boom)
+    with TestClient(app) as c:
+        r = c.post(
+            "/transcribe",
+            files={"audio": ("clip.webm", io.BytesIO(b"not-audio"), "audio/webm")},
+        )
+    assert r.status_code == 400
+    assert "decode" in r.json()["detail"].lower()

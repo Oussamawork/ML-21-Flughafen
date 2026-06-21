@@ -1,4 +1,5 @@
 // Typed client for the wayfinding backend (TDD-06).
+import { toWav16kMono } from "./audio";
 import type {
   AirportsResponse,
   ChatResponse,
@@ -50,8 +51,11 @@ export async function converse(params: {
   sessionId?: string;
   filename?: string;
 }): Promise<ConverseResponse> {
+  // Re-encode to 16 kHz mono WAV; the browser records webm/opus, which the
+  // backend's audio decoder cannot read.
+  const wav = await toWav16kMono(params.audio);
   const form = new FormData();
-  form.append("audio", params.audio, params.filename ?? "clip.webm");
+  form.append("audio", wav, params.filename ?? "clip.wav");
   if (params.sessionId) form.append("session_id", params.sessionId);
   const res = await fetch(`${API_BASE}/converse`, { method: "POST", body: form });
   const data = await asJson<ConverseResponse>(res);

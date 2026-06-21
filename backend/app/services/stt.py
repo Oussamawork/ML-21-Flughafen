@@ -51,11 +51,18 @@ def _load_transcriber(model_name: str, language: str):
     return WhisperTranscriber(model_name, language=language)
 
 
+class AudioDecodeError(Exception):
+    """Raised when uploaded audio bytes can't be decoded (bad/unsupported format)."""
+
+
 def _decode_audio(audio: bytes):
     """Decode arbitrary uploaded audio bytes to a 16 kHz mono float array."""
     import librosa
 
-    array, _ = librosa.load(io.BytesIO(audio), sr=_TARGET_SR, mono=True)
+    try:
+        array, _ = librosa.load(io.BytesIO(audio), sr=_TARGET_SR, mono=True)
+    except Exception as exc:  # soundfile/audioread raise various types
+        raise AudioDecodeError(str(exc)) from exc
     return array
 
 
