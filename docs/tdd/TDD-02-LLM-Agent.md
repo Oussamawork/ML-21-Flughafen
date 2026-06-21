@@ -1,7 +1,9 @@
 # TDD-02 — LLM Agent (Agentic Orchestration)
 
 **Component:** `backend/app/agent/`
-**Status:** 🟡 In progress — LangGraph graph + LLM-provider interface (offline default) + flight tools wired & default-on; KB tools + hosted-LLM verification pending
+**Status:** 🟢 Built — LangGraph graph + LLM-provider interface (offline default,
+Groq/OpenAI verified when keyed) + full tool set wired & default-on (flight tools
+TDD-03 + KB `directions`/`find_service`/`faq` TDD-04)
 **Depends on:** TDD-03 (tools), TDD-04 (RAG) · **Consumed by:** TDD-06 (`/chat`)
 
 ---

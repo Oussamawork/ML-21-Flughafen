@@ -6,6 +6,7 @@ them across requests rather than per-request.
 
 from __future__ import annotations
 
+from .kb import KnowledgeBase, build_knowledge_base
 from .services.agent import Agent, build_agent
 from .services.flight import FlightProvider, build_flight_provider
 from .services.stt import STT, build_stt
@@ -17,12 +18,15 @@ class Services:
     agent: Agent
     tts: TTS
     flight: FlightProvider
+    kb: KnowledgeBase
 
     def __init__(self) -> None:
         self.stt = build_stt()
-        # Build flight before the agent so the agent shares the same provider.
+        # Build flight + KB before the agent so all three share one instance
+        # (and /flight, /map and the agent stay consistent).
         self.flight = build_flight_provider()
-        self.agent = build_agent(flight_provider=self.flight)
+        self.kb = build_knowledge_base()
+        self.agent = build_agent(flight_provider=self.flight, knowledge_base=self.kb)
         self.tts = build_tts()
 
     @property

@@ -1,0 +1,81 @@
+# Airport FAQ (TDD-04) — backs the `faq` RAG tool. Seeded from SkyGuide
+# knowledge_base.json, extended with ar/ary/fr. Each topic carries a question +
+# answer per language; ingest expands them to one (topic, lang) chunk each, so a
+# Darija/Arabic/French query matches via the multilingual embedder and the answer
+# is returned in the user's language.
+faq:
+  - id: baggage
+    topic: baggage
+    variants:
+      en:
+        question: Where can I ask about lost baggage?
+        answer: Lost baggage support is at the arrivals service desk. Keep your baggage tag and passport ready.
+      fr:
+        question: Où puis-je signaler un bagage perdu ?
+        answer: Le service bagages perdus se trouve au comptoir des arrivées. Gardez votre étiquette de bagage et votre passeport.
+      ar:
+        question: أين أبلغ عن الأمتعة المفقودة؟
+        answer: مكتب الأمتعة المفقودة موجود عند مكتب خدمة الوصول. احتفظ ببطاقة الأمتعة وجواز السفر.
+      ary:
+        question: فين نقدر نسول على الباگاج اللي توضر؟
+        answer: مكتب الباگاج اللي توضر كاين عند مكتب الخدمة فالوصول. خلي معاك تيكي ديال الباگاج والباسبور.
+  - id: wifi
+    topic: wifi
+    variants:
+      en:
+        question: Is airport Wi-Fi available?
+        answer: Free Wi-Fi is available throughout the terminal. Connect to the guest network and follow the login page.
+      fr:
+        question: Y a-t-il du Wi-Fi à l'aéroport ?
+        answer: Le Wi-Fi gratuit est disponible dans tout le terminal. Connectez-vous au réseau invité et suivez la page de connexion.
+      ar:
+        question: هل يتوفر واي فاي في المطار؟
+        answer: يتوفر واي فاي مجاني في كامل المبنى. اتصل بشبكة الضيوف واتبع صفحة الدخول.
+      ary:
+        question: واش كاين ويفي فالمطار؟
+        answer: كاين ويفي بلاش فالتيرمينال كامل. تكونيكتا بالريزو ديال الضياف وتبع صفحة الدخول.
+  - id: prayer
+    topic: prayer
+    variants:
+      en:
+        question: Where is the prayer room?
+        answer: Prayer rooms are after security, near the central services area.
+      fr:
+        question: Où se trouve la salle de prière ?
+        answer: Les salles de prière sont après le contrôle de sécurité, près de la zone des services centraux.
+      ar:
+        question: أين توجد المصلى؟
+        answer: المصليات بعد التفتيش الأمني، قرب منطقة الخدمات المركزية.
+      ary:
+        question: فين كاين المصلى؟
+        answer: المصلى من بعد السيكوريتي، حدا منطقة الخدمات المركزية.
+  - id: connections
+    topic: connections
+    variants:
+      en:
+        question: What should I do for a connecting flight?
+        answer: Follow the transfer signs after security, check the latest gate on the screens, and allow extra time if your gate changed.
+      fr:
+        question: Que faire pour une correspondance ?
+        answer: Suivez les panneaux de correspondance après la sécurité, vérifiez la porte sur les écrans et prévoyez du temps si elle a changé.
+      ar:
+        question: ماذا أفعل للرحلة المتصلة؟
+        answer: اتبع لافتات الترانزيت بعد التفتيش، تحقق من البوابة على الشاشات، واترك وقتاً إضافياً إذا تغيرت البوابة.
+      ary:
+        question: أش ندير فالرحلة المتصلة؟
+        answer: تبع لافتات الترانزيت من بعد السيكوريتي، شوف البوابة فالشاشات، وخلي وقت زايد إلا تبدلات البوابة.
+  - id: checkin
+    topic: checkin
+    variants:
+      en:
+        question: When does check-in open and close?
+        answer: Check-in usually opens 3 hours before departure and closes 60 minutes before. Find your airline's desk in the check-in hall.
+      fr:
+        question: Quand l'enregistrement ouvre-t-il et ferme-t-il ?
+        answer: L'enregistrement ouvre en général 3 heures avant le départ et ferme 60 minutes avant. Trouvez le comptoir de votre compagnie dans le hall d'enregistrement.
+      ar:
+        question: متى يفتح ويغلق تسجيل الوصول؟
+        answer: يفتح تسجيل الوصول عادة قبل 3 ساعات من المغادرة ويغلق قبل 60 دقيقة. ابحث عن مكتب شركتك في صالة تسجيل الوصول.
+      ary:
+        question: إمتى كيحل وكيسد التشيك إن؟
+        answer: التشيك إن كيحل عادة 3 سوايع قبل الإقلاع وكيسد 60 دقيقة قبل. قلب على مكتب الشركة ديالك فصالة التشيك إن.

@@ -1,7 +1,9 @@
 # TDD-03 — Agent Tools & Flight Data Integration
 
 **Component:** `agent/tools/` (flight provider lives in `backend/app/services/flight.py` for now)
-**Status:** 🟡 In progress — AirLabs flight provider + `/flight` built & live-verified; KB tools pending
+**Status:** 🟢 Built — AirLabs flight provider + `/flight` and the full tool
+catalogue (`flight_status`/`find_gate` + KB `directions`/`find_service`/`faq`)
+wired into the agent; live-verified
 **Depends on:** TDD-04 (KB for FAQ/services/layout/check-in), **AirLabs API** (flight data)
 **Consumed by:** TDD-02 (agent), TDD-06 (`/flight` endpoint)
 
@@ -139,4 +141,5 @@ swap never touches the tools. **Verified live on a free key (2026-06-21).**
 - [x] `flight_status` / `find_gate` exposed as **agent tools** (TDD-02;
       `backend/app/agent/tools/flight_tools.py`, wrapping `FlightProvider`)
 - [x] Tool registry + JSON schemas for the agent (`agent/tools/registry.py`)
-- [ ] `find_service` / `directions` (route + positions + summary) / `faq` over KB
+- [x] `find_service` / `directions` (route + positions + summary) / `faq` over KB
+      (`backend/app/agent/tools/kb_tools.py`, wrapping the KnowledgeBase, TDD-04)

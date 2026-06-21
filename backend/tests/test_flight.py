@@ -103,7 +103,10 @@ def test_flight_endpoint_found():
     body = r.json()
     assert body["flight"]["gate"] == "B12"
     assert body["flight"]["direction"] == "departure"
-    assert body["route"] is None  # KB map not built yet (TDD-04)
+    # KB map (TDD-04) now enriches the flight with a route to the gate + check-in.
+    assert body["route"]["route"][-1] == "gate-b12"
+    assert body["route"]["route_summary"]["distance_m"] > 0
+    assert "Saudia" in body["checkin"]["zone"]
 
 
 def test_flight_endpoint_not_found():

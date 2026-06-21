@@ -1,0 +1,18 @@
+# Check-in desks/zones (TDD-04) — fills the gap AirLabs leaves (it has no check-in
+# field). Backs the dashboard "Check-in" field. Keyed by airline IATA, with a
+# default for any airline not listed. `node` ties the zone to the layout graph.
+default:
+  zone: Check-in hall, rows 1-12
+  node: check-in
+  opens_before_min: 180
+  closes_before_min: 60
+airlines:
+  SV:
+    zone: Check-in hall, rows 5-8 (Saudia)
+    node: check-in
+  EK:
+    zone: Check-in hall, rows 1-4 (Emirates)
+    node: check-in
+  EY:
+    zone: Check-in hall, rows 9-12 (Etihad)
+    node: check-in

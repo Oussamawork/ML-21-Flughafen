@@ -1,7 +1,7 @@
 # TDD-07 — Web Demo Frontend
 
 **Component:** `frontend/`
-**Status:** 🟡 In progress (SkyGuide-identical redesign: landing page + 4-card dashboard; **flight card from `/flight`**, agent chat+mic, map shell, JSON proof; live-verified vs mock backend; production build green)
+**Status:** 🟡 In progress (SkyGuide-identical redesign: landing page + 4-card dashboard; **flight card from `/flight`** with KB check-in, agent chat+mic on the real LangGraph agent, **live map route from `/map`**, JSON proof; live-verified vs mock backend; production build green)
 **Depends on:** TDD-06 (backend API) · **Consumed by:** end users / demo video
 
 ---
@@ -37,13 +37,12 @@ then chats by voice/text. Panels:
   airport-agnostic.
 - **Flight Information card** — dark hero (flight no + `dep → arr` route) and a
   label/value grid: airline, terminal, gate, check-in, baggage, boarding, status;
-  from `POST /flight`. **Check-in** is KB-sourced (TDD-04) → shows `—` for now;
+  from `POST /flight`. **Check-in** is KB-sourced (TDD-04, from `/flight.checkin`);
   **boarding** ← `estimated || scheduled`; status renders as plain text.
-- **Airport Map card** — SVG zones + position nodes at seeded `positions` (x,y %),
-  current position highlighted; distance/route banner shows the idle state until the
-  KB `/map` endpoint lands (TDD-04). Seed transcribed from SkyGuide's
-  `airport_map.json` into `lib/map-seed.ts` — **temporary AUH data**, to become
-  data-driven per `airport_id`.
+- **Airport Map card** — fetches `POST /map` (TDD-04) and draws the **live route
+  polyline** + distance/walk banner; nodes coloured by state (current=green,
+  target=red, on-route=blue); positions/zones come from the KB. `lib/map-seed.ts`
+  is kept only as the pre-fetch/offline fallback shell.
 - **Airport Agent card** — chat (Passenger/SkyGuide lines) with a **mic button**
   (`MediaRecorder` → 16 kHz WAV → `/converse` → fine-tuned Whisper), typed
   `/chat`, a voice-over toggle + replay (`/speak`), and per-message RTL.
@@ -99,10 +98,11 @@ then chats by voice/text. Panels:
       mock provider (SV624/EK201 + 404 path)
 - [x] **Airport Agent card** — chat + mic (`/converse`) + `/chat` + voice-over
       toggle/replay (`/speak`) + per-message RTL
-- [x] **Airport Map card** — zones + position nodes from the AUH seed
-      (`lib/map-seed.ts`); current position highlighted
+- [x] **Airport Map card** — live layout + route polyline from `POST /map` (TDD-04);
+      nodes coloured current/target/on-route; seed kept as offline fallback
 - [x] **Structured API Output card** (API proof — last payload)
-- [ ] **Live map route** — distance/walk banner + clickable re-route, from `/map` (TDD-04)
+- [x] **Live map route** — distance/walk banner from `/map`; **Check-in** filled
+      from `/flight.checkin` (TDD-04)
 - [x] Agent card talks to the real LangGraph agent (TDD-02); sends the ticket-strip
       `flight_number`/`position` to `/chat` & `/converse` so chat grounds without repeating the code
 - [ ] (v2) WebSocket streaming mode

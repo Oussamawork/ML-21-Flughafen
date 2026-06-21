@@ -4,3 +4,5 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+# ChromaDB persistent store (TDD-04); rebuilt via app.kb.ingest
+.kb_chroma/

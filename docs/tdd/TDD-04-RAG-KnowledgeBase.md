@@ -1,7 +1,10 @@
 # TDD-04 — Airport Knowledge Base & RAG
 
-**Component:** `knowledge_base/`
-**Status:** ⚪ Not started
+**Component:** `backend/app/kb/` (lives inside the backend package, like the agent
+in `backend/app/agent/` — imported with the `app.` prefix, shares the service container)
+**Status:** 🟢 Built — per-`airport_id` YAML data pack + map-graph directions +
+service index + ChromaDB/multilingual-embedding FAQ RAG; exposed as the agent's
+`directions`/`find_service`/`faq` tools and the `/map` endpoint. Live-verified.
 **Depends on:** none · **Consumed by:** TDD-03 (services/directions/faq), TDD-02
 
 ---
@@ -51,10 +54,16 @@ yaml/markdown ─▶ chunk (semantic, ~300 tokens) ─▶ embed ─▶ ChromaDB 
                                                    (metadata: airport_id, type, source)
 ```
 - **Embeddings:** multilingual model so Arabic/Darija/French queries match
-  Arabic/French content (e.g. `intfloat/multilingual-e5-base` or
-  `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`). Config-selected.
-- **Store:** ChromaDB (persistent local dir). One collection `airport_kb`,
-  filtered by `airport_id` metadata at query time.
+  Arabic/French content. Default `intfloat/multilingual-e5-base` (`KB_EMBEDDING_MODEL`),
+  CPU, loaded lazily. e5 query/passage prefixes applied automatically.
+- **Store:** ChromaDB (persistent local dir `KB_PERSIST_DIR`). One collection
+  `airport_kb`; each FAQ topic is stored as one chunk **per language**
+  (metadata `airport_id`/`type`/`topic`/`lang`/`source`), so retrieval filters by
+  `airport_id` and returns the answer in the user's language.
+- **Retriever behind an interface** (`KB_RETRIEVER`, mirrors the LLM provider
+  pattern): `chroma` (default — real embeddings, local, no key) and `keyword`
+  (dependency-free token overlap) so the **test suite never downloads a model**.
+  Build the store with `python -m app.kb.ingest --airport AUH` (or `--all`).
 
 ### 3.3 Retrieval
 ```python
@@ -102,12 +111,15 @@ Consumed by `find_service`, `directions`, `faq` tools (TDD-03).
 
 ## 7. Task checklist
 
-- [ ] Define YAML schemas (airport/services/checkin/layout) + FAQ markdown
-- [ ] `layout.yaml`: nodes + positions (x,y %) + edges w/ distances + gate/baggage
-      node maps — **seed AUH from SkyGuide `airport_map.json`**
-- [ ] `checkin.yaml` for AUH (fills the AirLabs check-in gap)
-- [ ] Author rest of AUH data pack (services, FAQ)
-- [ ] `ingest.py` (chunk + embed + ChromaDB) with `airport_id` metadata
-- [ ] `retrieve()` with airport/type filters
-- [ ] `directions` pathfinding → `route` + `positions` + `route_summary`
-- [ ] Second-airport fixture test (agnostic guarantee)
+- [x] Define YAML schemas (airport/services/checkin/layout/faq) — `backend/app/kb/data/AUH/`
+- [x] `layout.yaml`: nodes + positions (x,y %) + edges w/ distances + gate/baggage
+      node maps — **seeded AUH from SkyGuide `airport_map.json` + its edge table**
+- [x] `checkin.yaml` for AUH (fills the AirLabs check-in gap)
+- [x] Author rest of AUH data pack (services, FAQ in ar/ary/fr/en)
+- [x] `ingest.py` (chunk + embed + ChromaDB) with `airport_id`/`type`/`lang` metadata
+- [x] `retrieve()` with airport/type filters + language localization (chroma + keyword)
+- [x] `directions` pathfinding → `route` + `steps` + `positions` + `route_summary`
+- [x] `find_service` (structured filter) + `faq` (RAG) tools; `/map` endpoint + check-in
+- [x] Second-airport fixture test (agnostic guarantee) — `tests/test_kb.py`
+- Known limitation (§6): short **Darija** FAQ queries retrieve less reliably than
+  ar/fr/en with e5-base; the owned Darija model is Whisper (TDD-01), RAG is infra.

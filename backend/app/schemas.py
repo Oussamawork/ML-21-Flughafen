@@ -94,4 +94,24 @@ class FlightInfo(BaseModel):
 
 class FlightResponse(BaseModel):
     flight: FlightInfo
-    route: dict | None = None  # populated once the KB map lands (TDD-04)
+    route: dict | None = None  # KB route entrance/position -> the flight's gate (TDD-04)
+    checkin: dict | None = None  # KB check-in desk/zone (AirLabs has none) (TDD-04)
+
+
+class MapRequest(BaseModel):
+    airport_id: str | None = None
+    flight_number: str | None = None  # route to this flight's gate (typed; TDD-00)
+    gate: str | None = None           # or route directly to a gate code
+    to_node: str | None = None        # or to an explicit layout node
+    position: str | None = None       # "I am here" origin node
+
+
+class MapResponse(BaseModel):
+    airport_id: str
+    nodes: dict = Field(default_factory=dict)         # node id -> display name
+    positions: dict = Field(default_factory=dict)     # node id -> {x, y} (% coords)
+    zones: list = Field(default_factory=list)         # labelled rectangles
+    route: list[str] = Field(default_factory=list)    # ordered node ids (the polyline)
+    route_summary: dict | None = None                 # {distance_m, walking_time_min, steps}
+    current_position: str | None = None
+    to_node: str | None = None
