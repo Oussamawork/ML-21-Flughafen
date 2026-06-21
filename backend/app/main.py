@@ -21,7 +21,7 @@ from .state import Services
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Build services once (may load the STT model when LOAD_STT=true).
+    # Build services once (loads the fine-tuned Whisper STT by default).
     state.services = Services()
     yield
     state.services = None

@@ -4,6 +4,7 @@ import type {
   AirportsResponse,
   ChatResponse,
   ConverseResponse,
+  FlightResponse,
   Language,
 } from "./types";
 
@@ -25,6 +26,35 @@ async function asJson<T>(res: Response): Promise<T> {
 
 export async function getAirports(): Promise<AirportsResponse> {
   return asJson(await fetch(`${API_BASE}/airports`));
+}
+
+// Lookup kinds the dashboard surfaces differently: not-found vs provider-down.
+export type FlightErrorKind = "not_found" | "unavailable" | "error";
+
+export class FlightLookupError extends Error {
+  constructor(public kind: FlightErrorKind) {
+    super(kind);
+  }
+}
+
+export async function getFlight(params: {
+  flightNumber: string;
+  airportId?: string;
+  position?: string;
+}): Promise<FlightResponse> {
+  const res = await fetch(`${API_BASE}/flight`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      flight_number: params.flightNumber,
+      airport_id: params.airportId ?? null,
+      position: params.position ?? null,
+    }),
+  });
+  if (res.ok) return (await res.json()) as FlightResponse;
+  if (res.status === 404) throw new FlightLookupError("not_found");
+  if (res.status === 503) throw new FlightLookupError("unavailable");
+  throw new FlightLookupError("error");
 }
 
 export async function sendChat(params: {

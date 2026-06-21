@@ -33,14 +33,27 @@ export interface AirportsResponse {
   default: string;
 }
 
-// UI-side chat message model.
-export interface Message {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-  language?: Language;
-  intent?: string;
-  toolTrace?: ToolCall[];
-  audioUrl?: string; // absolute URL to a playable clip
-  latencyMs?: Record<string, number>;
+// Flight lookup (TDD-03 `/flight`). The flight number is typed by the user
+// (R1: structured input, not parsed from audio); all fields may be null.
+export interface FlightInfo {
+  flight_number: string;
+  airline: string | null;
+  status: string | null;
+  direction: string | null; // departure | arrival | other
+  scheduled: string | null;
+  estimated: string | null;
+  actual: string | null;
+  gate: string | null;
+  terminal: string | null;
+  baggage: string | null; // arrivals only
+  delay_minutes: number | null;
+  departure_airport: string | null;
+  arrival_airport: string | null;
+  aircraft: string | null;
+  source: string;
+}
+
+export interface FlightResponse {
+  flight: FlightInfo;
+  route: Record<string, unknown> | null; // reserved for the KB map (TDD-04)
 }

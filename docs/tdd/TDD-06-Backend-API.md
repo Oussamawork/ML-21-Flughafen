@@ -26,7 +26,7 @@ state, and provide both a REST API and a real-time WebSocket channel.
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| `GET` | `/health` | — | `{status, version}` |
+| `GET` | `/health` | — | `{status, version, stt_loaded, whisper_model?, agent_backend, tts_provider}` |
 | `POST` | `/transcribe` | multipart audio | `{text, language}` |
 | `POST` | `/chat` | `{text, session_id?, airport_id?, language?, flight_number?, position?}` | `AgentResult` |
 | `POST` | `/speak` | `{text, language}` | audio stream (`audio/mpeg`) |
@@ -61,8 +61,9 @@ state, and provide both a REST API and a real-time WebSocket channel.
   `AIRLABS_API_KEY`; the backend **strips the AirLabs `request`/meta block** (it
   echoes the key) before anything is returned to the client. The frontend never
   talks to AirLabs directly.
-- Models loaded once at startup (lifespan event); heavy (Whisper) optional via
-  `LOAD_STT` flag so the API can boot without GPU for agent-only dev.
+- Models loaded once at startup (lifespan event). STT defaults to the fine-tuned
+  Whisper (`LOAD_STT=true`, `Amassu/whisper-small-darija`); set `LOAD_STT=false`
+  for stub STT during agent-only dev or tests.
 
 ## 4. Interfaces & data contracts
 

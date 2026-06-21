@@ -24,7 +24,7 @@ def test_health():
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
-    assert body["stt_loaded"] is False  # stub by default
+    assert body["stt_loaded"] is False  # conftest forces stub STT for tests
     assert "version" in body
 
 

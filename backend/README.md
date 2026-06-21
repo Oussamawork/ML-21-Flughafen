@@ -4,37 +4,79 @@ The service that exposes the assistant: it orchestrates **STT → agent → TTS*
 holds session state, and serves a REST API + a WebSocket. Design:
 `../docs/tdd/TDD-06-Backend-API.md`.
 
-> **Runs today with zero GPU / zero API keys.** The STT, agent, and TTS are
-> behind interfaces with **offline stubs** (`app/services/`). Real components drop
-> in behind the same interfaces: STT=TDD-01, agent=TDD-02/03, TTS=TDD-05.
+> **STT uses the fine-tuned Whisper by default** (`Amassu/whisper-small-darija`,
+> TDD-01). Agent and TTS still use offline stubs until TDD-02/05 land. Flight
+> data defaults to `mock` (no API key).
 
 ## Run
 
 ```bash
 cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload      # http://127.0.0.1:8000/docs
+pip install -r requirements.txt -r ../asr_finetuning/requirements.txt
+cp .env.example .env          # LOAD_STT=true and WHISPER_MODEL already set
+uvicorn app.main:app --reload # http://127.0.0.1:8000/docs
 ```
 
-Configure via env (see `.env.example`): `AIRPORT_ID`, `LOAD_STT`,
-`WHISPER_MODEL`, `AGENT_BACKEND`, `FLIGHT_API_PROVIDER` (`mock`|`airlabs`),
-`AIRLABS_API_KEY`, `FLIGHT_CACHE_TTL`, `TTS_PROVIDER`, `CORS_ORIGINS`,
-`SESSION_TTL`. Flight data defaults to `mock` so the API runs with no key; set
-`FLIGHT_API_PROVIDER=airlabs` + `AIRLABS_API_KEY` (server-side) for live lookups.
+`.env` is loaded automatically at startup. Override any setting there or via the
+shell (`export WHISPER_MODEL=/path/to/checkpoint`).
+
+### Verify the fine-tuned model is active
+
+After startup (first run downloads the model from Hugging Face — may take a minute):
+
+```bash
+curl -s http://127.0.0.1:8000/health | python -m json.tool
+```
+
+You should see:
+
+```json
+{
+  "status": "ok",
+  "stt_loaded": true,
+  "whisper_model": "Amassu/whisper-small-darija",
+  "agent_backend": "stub",
+  "tts_provider": "stub"
+}
+```
+
+- `stt_loaded: true` — real Whisper STT, not the stub
+- `whisper_model` — which checkpoint/HF id is loaded (your fine-tune by default)
+
+Or open http://127.0.0.1:8000/docs → **GET /health** → **Try it out**.
+
+### Stub mode (no GPU / faster boot)
+
+For agent-only development or CI, disable the model:
+
+```bash
+LOAD_STT=false uvicorn app.main:app --reload
+```
+
+`/health` will then report `"stt_loaded": false` and omit `whisper_model`.
+
+## Configuration
+
+See `.env.example`: `AIRPORT_ID`, `LOAD_STT`, `WHISPER_MODEL`, `AGENT_BACKEND`,
+`FLIGHT_API_PROVIDER` (`mock`|`airlabs`), `AIRLABS_API_KEY`, `FLIGHT_CACHE_TTL`,
+`TTS_PROVIDER`, `CORS_ORIGINS`, `SESSION_TTL`.
+
+Point `WHISPER_MODEL` at a local checkpoint dir instead of the HF Hub id if you
+trained locally, e.g. `WHISPER_MODEL=../asr_finetuning/outputs/run/final`.
 
 ## Test
 
 ```bash
 cd backend
 pip install -r requirements-dev.txt
-pytest                              # end-to-end tests against the stubs
+pytest                              # stub STT in tests (no GPU)
 ```
 
 ## Endpoints
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| GET | `/health` | — | status + which backends are active |
+| GET | `/health` | — | status + `stt_loaded`, `whisper_model`, active backends |
 | GET | `/airports` | — | installed `airport_id`s (KB-driven later) |
 | POST | `/flight` | `{flight_number, airport_id?, position?}` | `{flight, route?}` — flight by number, scoped to airport (TDD-03) |
 | POST | `/transcribe` | multipart `audio` | `{text, language, session_id}` |
@@ -53,7 +95,7 @@ pytest                              # end-to-end tests against the stubs
 backend/
 ├── app/
 │   ├── main.py          # FastAPI app, lifespan (builds services), CORS
-│   ├── config.py        # env-driven settings
+│   ├── config.py        # env-driven settings (.env auto-loaded)
 │   ├── schemas.py       # pydantic request/response contracts
 │   ├── sessions.py      # in-memory session store + TTL
 │   ├── state.py         # process-wide service container
@@ -62,18 +104,9 @@ backend/
 └── tests/test_api.py    # TestClient end-to-end tests
 ```
 
-## Enabling the real fine-tuned Whisper
+## STT integration (TDD-01)
 
-The Darija fine-tune (TDD-01) is on the HF Hub as
+The Darija fine-tune lives on the HF Hub as
 [`Amassu/whisper-small-darija`](https://huggingface.co/Amassu/whisper-small-darija)
-and is already the default `WHISPER_MODEL`. To load it, set `LOAD_STT=true` and
-install the ASR deps:
-
-```bash
-pip install -r ../asr_finetuning/requirements.txt
-LOAD_STT=true uvicorn app.main:app          # uses Amassu/whisper-small-darija by default
-```
-
-Override `WHISPER_MODEL` to point at a local checkpoint or another HF id.
-`app/services/stt.py::WhisperSTT` lazily wraps `asr_finetuning`'s
-`WhisperTranscriber`, so torch/transformers/librosa are imported only on this path.
+and is the default `WHISPER_MODEL`. `app/services/stt.py::WhisperSTT` wraps
+`asr_finetuning`'s `WhisperTranscriber`.

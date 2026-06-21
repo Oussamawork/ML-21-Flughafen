@@ -7,5 +7,42 @@
 }
 
 body {
-  @apply bg-slate-100 text-slate-900;
+  @apply bg-[#eef4f8] text-ink;
+}
+
+/* SkyGuide bits that aren't worth expressing as Tailwind utilities. */
+
+/* Map canvas grid lines (mirrors .airport-map background in styles.css). */
+.sg-map-grid {
+  background:
+    linear-gradient(90deg, rgba(38, 119, 201, 0.08) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(38, 119, 201, 0.08) 1px, transparent 1px),
+    linear-gradient(135deg, #f7fbff, #edf3f7);
+  background-size: 34px 34px, 34px 34px, auto;
+}
+
+/* Top loading progress bar (mirrors .app-page::before). */
+.sg-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, #df1f3d, #2677c9, #1d9b75);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+  z-index: 20;
+}
+.sg-progress[data-on="true"] {
+  transform: scaleX(1);
+}
+
+/* Dashed route polyline (mirrors .route-line). */
+.sg-route-line {
+  fill: none;
+  stroke: #df1f3d;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 3 2;
+  filter: drop-shadow(0 6px 10px rgba(223, 31, 61, 0.28));
 }

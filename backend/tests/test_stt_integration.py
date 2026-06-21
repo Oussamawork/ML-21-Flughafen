@@ -61,7 +61,9 @@ def test_transcribe_endpoint_uses_fine_tuned_whisper(whisper_backend):
 def test_health_reports_stt_loaded(whisper_backend):
     with TestClient(app) as c:
         r = c.get("/health")
-    assert r.json()["stt_loaded"] is True
+    body = r.json()
+    assert body["stt_loaded"] is True
+    assert body["whisper_model"] == settings.whisper_model
 
 
 def test_transcribe_returns_400_on_undecodable_audio(whisper_backend, monkeypatch):

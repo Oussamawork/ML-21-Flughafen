@@ -12,6 +12,7 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     version: str
     stt_loaded: bool
+    whisper_model: str | None = None  # set when the real Whisper STT is active
     agent_backend: str
     tts_provider: str
 
