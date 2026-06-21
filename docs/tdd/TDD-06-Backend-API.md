@@ -90,8 +90,8 @@ components (TDD-01/02/05). Env: model paths, provider keys, `LOAD_STT`,
 - [x] `WS /ws/{session_id}`
 - [x] Session store + TTL
 - [x] Pydantic schemas + OpenAPI docs + CORS
-- [x] Offline stubs (STT/agent/TTS) + end-to-end tests (`pytest`, 11 passing)
-- [ ] Swap stub STT → fine-tuned Whisper (`LOAD_STT`, after TDD-01 checkpoint)
+- [x] Offline stubs (STT/agent/TTS) + end-to-end tests (`pytest`, 14 passing)
+- [x] Swap stub STT → fine-tuned Whisper (`LOAD_STT=true` → `Amassu/whisper-small-darija`)
 - [ ] Swap stub agent → LangGraph (TDD-02) and stub TTS → provider (TDD-05)
 
 > **Implementation note:** STT/agent/TTS are interfaces in `app/services/` with

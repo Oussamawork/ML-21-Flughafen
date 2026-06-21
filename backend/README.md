@@ -60,13 +60,16 @@ backend/
 
 ## Enabling the real fine-tuned Whisper
 
-Once a checkpoint exists (TDD-01), set `LOAD_STT=true` and point `WHISPER_MODEL`
-at the HF id or local path, and install the ASR deps:
+The Darija fine-tune (TDD-01) is on the HF Hub as
+[`Amassu/whisper-small-darija`](https://huggingface.co/Amassu/whisper-small-darija)
+and is already the default `WHISPER_MODEL`. To load it, set `LOAD_STT=true` and
+install the ASR deps:
 
 ```bash
 pip install -r ../asr_finetuning/requirements.txt
-LOAD_STT=true WHISPER_MODEL=Oussamawork/whisper-small-darija uvicorn app.main:app
+LOAD_STT=true uvicorn app.main:app          # uses Amassu/whisper-small-darija by default
 ```
 
+Override `WHISPER_MODEL` to point at a local checkpoint or another HF id.
 `app/services/stt.py::WhisperSTT` lazily wraps `asr_finetuning`'s
-`WhisperTranscriber`, so importing torch is deferred to that path.
+`WhisperTranscriber`, so torch/transformers/librosa are imported only on this path.
