@@ -123,5 +123,5 @@ GPU required for training (Colab/Kaggle); CPU is fine for inference of small mod
 - [x] Smoke test passes locally (Mac CPU + DODa; `scripts/smoke_test.sh`)
 - [x] Full fine-tune (3000 steps on a T4)
 - [x] Evaluate fine-tuned; record delta — **WER 108.18% → 28.79%; CER 63.76% → 9.63%** (see `../RESULTS_TDD-01.md`)
-- [ ] Push checkpoint to HF Hub (`Amassu/whisper-small-darija`)
+- [x] Push checkpoint to HF Hub — [`Amassu/whisper-small-darija`](https://huggingface.co/Amassu/whisper-small-darija)
 - [ ] Wire `WhisperTranscriber` into `/transcribe` (TDD-06) via `LOAD_STT=true`

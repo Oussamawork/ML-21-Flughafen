@@ -16,7 +16,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Component | TDD | Status | Notes |
 |---|---|---|---|
 | System overview / architecture | TDD-00 | 🟢 | Design written |
-| STT — fine-tuned Whisper | TDD-01 | 🟢 | **Fine-tuned on T4: WER 108→28.8%, CER 64→9.6%** (DODa). Pending: push to HF Hub + wire into backend |
+| STT — fine-tuned Whisper | TDD-01 | 🟢 | **Fine-tuned: WER 108→28.8%, CER 64→9.6%** (DODa); pushed to `Amassu/whisper-small-darija`. Pending: wire into backend (`LOAD_STT=true`) |
 | LLM agent (LangGraph) | TDD-02 | ⚪ | Designed |
 | Agent tools + flight API | TDD-03 | ⚪ | Designed |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
