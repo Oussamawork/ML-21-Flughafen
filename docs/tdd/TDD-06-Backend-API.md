@@ -29,7 +29,7 @@ state, and provide both a REST API and a real-time WebSocket channel.
 | `GET` | `/health` | — | `{status, version, stt_loaded, whisper_model?, agent_backend, tts_provider}` |
 | `POST` | `/transcribe` | multipart audio | `{text, language}` |
 | `POST` | `/chat` | `{text, session_id?, airport_id?, language?, flight_number?, position?}` | `AgentResult` |
-| `POST` | `/speak` | `{text, language}` | audio stream (`audio/mpeg`) |
+| `POST` | `/speak` | `{text, language}` | audio stream (WAV; real MMS-TTS, TDD-05) |
 | `POST` | `/converse` | multipart audio + `session_id?` + `airport_id?` + `flight_number?` + `position?` | `{text_in, answer, language, audio_url, flight?, route?}` |
 | `POST` | `/flight` | `{flight_number, airport_id?, position?}` | normalized flight card + KB `route` to the gate + `checkin` (TDD-04) |
 | `POST` | `/map` | `{airport_id?, flight_number?, gate?, to_node?, position?}` | `{nodes, positions, zones, route, route_summary, current_position, to_node}` |
@@ -113,7 +113,7 @@ LLM/TTS provider keys.
 - [x] `WS /ws/{session_id}`
 - [x] Session store + TTL
 - [x] Pydantic schemas + OpenAPI docs + CORS
-- [x] Offline stubs (STT/agent/TTS) + end-to-end tests (`pytest`, 55 passing)
+- [x] Offline stubs (STT/agent/TTS) + end-to-end tests (`pytest`, 61 passing)
 - [x] Swap stub STT → fine-tuned Whisper (`LOAD_STT=true` → `Amassu/whisper-small-darija`)
 - [x] `POST /flight` (ticket-first card; KB `route` to the gate + `checkin`, TDD-04)
 - [x] AirLabs flight tool wired server-side; strip `request`/meta (key echo)
@@ -122,7 +122,7 @@ LLM/TTS provider keys.
 - [x] `POST /map` endpoint (TDD-04 KB layout + route + summary)
 - [x] Typed `flight_number`/`position` on `/chat` & `/converse` (+ WS); persisted on
       the session so voice turns stay grounded; passed to the agent (default `airport_id=AUH`)
-- [ ] Swap stub TTS → provider (TDD-05)
+- [x] Swap stub TTS → **local MMS-TTS** (TDD-05; `TTS_PROVIDER=local` default)
 
 > **Implementation note:** STT/agent/TTS are interfaces in `app/services/`; STT and
 > the agent are real (fine-tuned Whisper; LangGraph + flight tool), TTS is still an

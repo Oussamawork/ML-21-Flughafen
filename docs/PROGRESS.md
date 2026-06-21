@@ -5,7 +5,7 @@ Update this at the end of every working session so any future session (human or
 AI) can resume without re-reading everything.
 
 **Project:** Multilingual Smart Airport Wayfinding Assistant (case study: AUH)
-**Branch:** `feat/tdd-04-knowledge-base`
+**Branch:** `feat/tdd-05-tts`
 
 ---
 
@@ -20,15 +20,16 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | LLM agent (LangGraph) | TDD-02 | 🟢 | **LangGraph agent built + default-on** (`AGENT_BACKEND=langgraph`); LLM behind a provider interface, **offline default (no key)**, Groq/OpenAI when keyed; calls flight + KB tools; live-verified |
 | Agent tools + flight API | TDD-03 | 🟢 | AirLabs flight provider + `/flight` (mock default; live-verified); **full tool catalogue wired**: `flight_status`/`find_gate` + KB `directions`/`find_service`/`faq` |
 | Knowledge base + RAG | TDD-04 | 🟢 | **Built** in `backend/app/kb/`: per-`airport_id` YAML pack + map-graph `directions` + service index + **ChromaDB/multilingual-e5 FAQ RAG** (retriever interface: chroma default, keyword for tests); `/map` endpoint; live-verified (semantic EN/FR/AR; Darija weaker — see open Qs) |
-| TTS | TDD-05 | ⚪ | Designed |
-| Backend API (FastAPI) | TDD-06 | 🟡 | Fine-tuned Whisper STT on by default (`LOAD_STT=true`); `/health` exposes `stt_loaded` + `whisper_model`; agent/TTS still stubs; 14 tests passing |
+| TTS | TDD-05 | 🟢 | **Built** — real **local MMS-TTS** (`facebook/mms-tts-{ara,fra,eng}`, on-CPU, no key, `TTS_PROVIDER=local` default) behind the existing `TTS` interface; `/speak`+`/converse` now speak; ar/fr/en (Darija→Arabic); live-verified. Tests keep stub TTS |
+| Backend API (FastAPI) | TDD-06 | 🟢 | All stages real: STT (fine-tuned Whisper, `LOAD_STT=true`), agent (LangGraph), KB+RAG, TTS (local MMS-TTS); `/health` reports active backends; `/transcribe /chat /speak /converse /flight /map /airports` + WS; 61 tests passing |
 | Frontend (Next.js) | TDD-07 | 🟡 | **SkyGuide-identical redesign**: landing page + 4-card dashboard (Flight `/flight` + KB check-in, Agent chat+mic on the real agent, **live Map route from `/map`**, JSON proof); live-verified; build green. Remaining: optional WebSocket streaming |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
 
 **Milestones:** M1 Speech-in · M2 Brain · M3 Knowledge · M4 Speech-out+UI ·
-M5 Eval+Deploy. → **M3 Knowledge done** (KB + RAG + `/map` built). Next: **M4** —
-real TTS (TDD-05) is the last stubbed component; then eval + deploy (M5).
+M5 Eval+Deploy. → **M4 done** (real local TTS; the whole STT→agent→KB→TTS pipeline
+now runs for real, offline/key-free). Next: **M5** — evaluation (TDD-08) + Docker
+deployment (TDD-09).
 
 ## 2. Key decisions (chronological)
 
@@ -327,6 +328,24 @@ real TTS (TDD-05) is the last stubbed component; then eval + deploy (M5).
   `/map` route SV624→gate-b12 (525 m/7 min), directions chat chain. Darija short
   queries weaker (logged as an open question). Branch `feat/tdd-04-knowledge-base`.
 - **Next:** TDD-05 real TTS (last stub) → then M5 eval + deploy.
+
+### Session 2026-06-21 (cont.) — TDD-05 local TTS (M3 → M4 done)
+- Replaced the silent `StubTTS` with **real local MMS-TTS** (`MmsTTS` in
+  `services/tts.py`): Meta `facebook/mms-tts-{ara,fra,eng}` via the installed
+  `transformers`/`torch` — **no key, offline/CPU** (same philosophy as Whisper).
+  One model per language (lazy + cached), float→16-bit PCM WAV, bounded phrase cache.
+  Behind the existing `TTS` interface → `/speak`+`/converse`+frontend autoplay unchanged.
+- **Default flipped** `TTS_PROVIDER=local`; conftest sets `stub` so tests download
+  no model (mirrors `LOAD_STT=false`/`KB_RETRIEVER=keyword`). Language→model map is
+  config-driven (`TTS_MODEL_<LANG>`); Darija→Arabic voice.
+- **Step 0 gate passed:** mms-tts-ara + -eng load + synthesize on Python 3.14 /
+  transformers 5.x; **Arabic needs no `uroman`**. **Live-verified** `/speak` for
+  en/fr/ar returns real voiced WAVs (53-75 KB). **Tests: 61 passing** (+5 TTS, MMS
+  engine faked). Branch `feat/tdd-05-tts`.
+- Decision: local-first TTS (user's call) — hosted ElevenLabs/Azure remain a drop-in
+  behind the same interface. Limitation: MMS Arabic mispronounces embedded Latin
+  (gate "B12"); Darija uses the Arabic voice (TTS is infra; owned model is Whisper).
+- **Next:** M5 — TDD-08 evaluation + TDD-09 deployment (Docker).
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

@@ -64,7 +64,8 @@ See `.env.example`: `AIRPORT_ID`, `LOAD_STT`, `WHISPER_MODEL`, `AGENT_BACKEND`
 `MAX_TOOL_HOPS`, `OPENAI_API_KEY`/`GROQ_API_KEY` (server-side only),
 `FLIGHT_API_PROVIDER` (`mock`|`airlabs`), `AIRLABS_API_KEY`, `FLIGHT_CACHE_TTL`,
 `KB_RETRIEVER` (`chroma`|`keyword`), `KB_EMBEDDING_MODEL`, `KB_PERSIST_DIR`,
-`TTS_PROVIDER`, `CORS_ORIGINS`, `SESSION_TTL`.
+`TTS_PROVIDER` (`local`|`stub`) + `TTS_MODEL_<LANG>` overrides, `CORS_ORIGINS`,
+`SESSION_TTL`.
 
 Point `WHISPER_MODEL` at a local checkpoint dir instead of the HF Hub id if you
 trained locally, e.g. `WHISPER_MODEL=../asr_finetuning/outputs/run/final`.
@@ -85,6 +86,15 @@ python -m app.kb.ingest --airport AUH      # or --all
 Add an airport = drop `app/kb/data/<id>/`, then ingest it. Nothing airport-specific
 is hard-coded in code (TDD-00 airport-agnostic rule).
 
+## Text-to-Speech (TDD-05)
+
+`/speak` and `/converse` synthesize replies with **local MMS-TTS** by default
+(`TTS_PROVIDER=local`): Meta `facebook/mms-tts-{ara,fra,eng}` on the installed
+`transformers`/`torch` stack — **no key, offline**, one model per language
+(lazy-loaded, ~145 MB each downloaded on first use; ar/fr/en, Darija→Arabic).
+`TTS_PROVIDER=stub` returns a silent WAV (used by tests). Hosted ElevenLabs/Azure
+can be added behind the same `TTS` interface later.
+
 ## Test
 
 ```bash
@@ -103,7 +113,7 @@ pytest                              # stub STT in tests (no GPU)
 | POST | `/map` | `{airport_id?, flight_number?, gate?, to_node?, position?}` | `{nodes, positions, zones, route, route_summary, current_position, to_node}` (TDD-04) |
 | POST | `/transcribe` | multipart `audio` | `{text, language, session_id}` |
 | POST | `/chat` | `{text, session_id?, airport_id?, language?}` | `ChatResponse` |
-| POST | `/speak` | `{text, language}` | audio stream |
+| POST | `/speak` | `{text, language}` | WAV audio — real local MMS-TTS (TDD-05) |
 | POST | `/converse` | multipart `audio` | STT→agent→TTS: `{text_in, answer, audio_url, latency_ms, …}` |
 | GET | `/audio/{id}` | — | the TTS clip produced by `/converse` |
 | WS | `/ws/{session_id}` | `{type:'text'\|'audio', data, language?}` | streamed `transcript` / `answer` |

@@ -9,3 +9,4 @@ import os
 os.environ["LOAD_STT"] = "false"
 os.environ["LLM_PROVIDER"] = "offline"
 os.environ["KB_RETRIEVER"] = "keyword"  # dep-free RAG: no model download in tests
+os.environ["TTS_PROVIDER"] = "stub"     # silent WAV: no TTS model download in tests
