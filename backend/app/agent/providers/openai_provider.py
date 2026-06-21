@@ -25,14 +25,28 @@ class OpenAIProvider:
     def _to_openai_messages(self, messages: list[dict], airport_id: str) -> list[dict]:
         out = [{"role": "system", "content": SYSTEM_PROMPT.format(airport_id=airport_id)}]
         for m in messages:
-            if m.get("role") == "tool":
-                # Our format lacks tool_call_ids; surface results as context instead.
+            role = m.get("role")
+            if role == "tool":
                 out.append({
-                    "role": "system",
-                    "content": f"Tool {m.get('name')} returned: {json.dumps(m.get('result'))}",
+                    "role": "tool",
+                    "tool_call_id": m.get("tool_call_id"),
+                    "content": json.dumps(m.get("result")),
+                })
+            elif role == "assistant" and m.get("tool_calls"):
+                out.append({
+                    "role": "assistant",
+                    "content": m.get("content") or None,
+                    "tool_calls": [
+                        {
+                            "id": tc["id"],
+                            "type": "function",
+                            "function": {"name": tc["name"], "arguments": json.dumps(tc["args"])},
+                        }
+                        for tc in m["tool_calls"]
+                    ],
                 })
             else:
-                out.append({"role": m["role"], "content": m.get("content", "")})
+                out.append({"role": role, "content": m.get("content", "")})
         return out
 
     def complete(
@@ -52,11 +66,16 @@ class OpenAIProvider:
             model=self._model,
             messages=self._to_openai_messages(messages, airport_id),
             tools=tool_defs or None,
+            temperature=0,  # faithful to tool results; reduce hallucination
         )
         choice = resp.choices[0].message
         if choice.tool_calls:
             calls = [
-                ToolCallReq(tc.function.name, json.loads(tc.function.arguments or "{}"))
+                ToolCallReq(
+                    tc.function.name,
+                    json.loads(tc.function.arguments or "{}"),
+                    id=tc.id,
+                )
                 for tc in choice.tool_calls
             ]
             return LLMResult(tool_calls=calls, intent="find_gate")

@@ -42,13 +42,27 @@ def build_graph(provider: LLMProvider, registry: dict[str, Tool], max_hops: int)
             flight_number=state.get("flight_number"),
         )
         if result.tool_calls:
-            return {
-                "pending_calls": [
-                    {"tool": c.tool, "args": c.args} for c in result.tool_calls
+            # Assign ids and record the assistant tool-call turn so hosted LLMs see
+            # (assistant tool_calls -> tool results) as a linked pair next hop.
+            calls = [
+                {"id": c.id or f"call_{state['hops']}_{i}", "tool": c.tool, "args": c.args}
+                for i, c in enumerate(result.tool_calls)
+            ]
+            assistant_msg = {
+                "role": "assistant",
+                "content": result.content or "",
+                "tool_calls": [
+                    {"id": c["id"], "name": c["tool"], "args": c["args"]} for c in calls
                 ],
+            }
+            return {
+                "messages": state["messages"] + [assistant_msg],
+                "pending_calls": calls,
                 "intent": result.intent,
             }
-        return {"answer": result.content, "intent": result.intent, "pending_calls": []}
+        # Keep the tool-driven intent (e.g. find_gate) for the final answer turn.
+        intent = state.get("intent") if state.get("tool_trace") else result.intent
+        return {"answer": result.content, "intent": intent or "smalltalk", "pending_calls": []}
 
     def tools(state: AgentState) -> dict:
         trace = list(state["tool_trace"])
@@ -64,7 +78,12 @@ def build_graph(provider: LLMProvider, registry: dict[str, Tool], max_hops: int)
                 except (ToolUnavailable, ToolBadInput) as exc:
                     result = {"error": str(exc)}
             trace.append({"tool": name, "args": args, "result": result})
-            messages.append({"role": "tool", "name": name, "result": result})
+            messages.append({
+                "role": "tool",
+                "tool_call_id": call.get("id"),
+                "name": name,
+                "result": result,
+            })
         return {
             "tool_trace": trace,
             "messages": messages,

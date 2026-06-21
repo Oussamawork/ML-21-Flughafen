@@ -21,6 +21,7 @@ class ToolSpec:
 class ToolCallReq:
     tool: str
     args: dict
+    id: str | None = None  # provider-native tool_call id (for hosted LLM protocol)
 
 
 @dataclass
