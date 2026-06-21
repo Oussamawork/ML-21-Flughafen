@@ -1,0 +1,63 @@
+"""OpenAI tool-calling provider (selected by LLM_PROVIDER=openai).
+
+The `openai` SDK is imported lazily so the package stays importable with no SDK and
+no key under the default offline provider. Untested without a key — wire OPENAI_API_KEY
+to exercise it.
+"""
+
+from __future__ import annotations
+
+import json
+
+from ..prompts import SYSTEM_PROMPT
+from .base import LLMResult, ToolCallReq, ToolSpec
+
+
+class OpenAIProvider:
+    def __init__(self, api_key: str, model: str) -> None:
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY required for LLM_PROVIDER=openai")
+        from openai import OpenAI  # lazy
+
+        self._client = OpenAI(api_key=api_key)
+        self._model = model
+
+    def _to_openai_messages(self, messages: list[dict], airport_id: str) -> list[dict]:
+        out = [{"role": "system", "content": SYSTEM_PROMPT.format(airport_id=airport_id)}]
+        for m in messages:
+            if m.get("role") == "tool":
+                # Our format lacks tool_call_ids; surface results as context instead.
+                out.append({
+                    "role": "system",
+                    "content": f"Tool {m.get('name')} returned: {json.dumps(m.get('result'))}",
+                })
+            else:
+                out.append({"role": m["role"], "content": m.get("content", "")})
+        return out
+
+    def complete(
+        self,
+        *,
+        messages: list[dict],
+        tools: list[ToolSpec],
+        language: str,
+        airport_id: str,
+        flight_number: str | None,
+    ) -> LLMResult:
+        tool_defs = [
+            {"type": "function", "function": {"name": t.name, "parameters": t.json_schema}}
+            for t in tools
+        ]
+        resp = self._client.chat.completions.create(
+            model=self._model,
+            messages=self._to_openai_messages(messages, airport_id),
+            tools=tool_defs or None,
+        )
+        choice = resp.choices[0].message
+        if choice.tool_calls:
+            calls = [
+                ToolCallReq(tc.function.name, json.loads(tc.function.arguments or "{}"))
+                for tc in choice.tool_calls
+            ]
+            return LLMResult(tool_calls=calls, intent="find_gate")
+        return LLMResult(content=choice.content, intent="smalltalk")

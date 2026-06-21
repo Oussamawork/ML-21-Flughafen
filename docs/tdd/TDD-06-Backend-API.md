@@ -116,10 +116,14 @@ LLM/TTS provider keys.
 - [x] Swap stub STT → fine-tuned Whisper (`LOAD_STT=true` → `Amassu/whisper-small-darija`)
 - [x] `POST /flight` (ticket-first card; `route` reserved for TDD-04 map)
 - [x] AirLabs flight tool wired server-side; strip `request`/meta (key echo)
+- [x] Swap stub agent → **LangGraph** (TDD-02; `AGENT_BACKEND=langgraph` default,
+      offline LLM provider — runs key-free)
 - [ ] `GET /map` endpoint (after TDD-04 map data)
 - [ ] Add `flight_number`/`position` to `/chat` & `/converse`; default `airport_id=AUH`
-- [ ] Swap stub agent → LangGraph (TDD-02) and stub TTS → provider (TDD-05)
+      (agent side pre-wired; needs the request-contract + FE send)
+- [ ] Swap stub TTS → provider (TDD-05)
 
-> **Implementation note:** STT/agent/TTS are interfaces in `app/services/` with
-> offline stubs, so the API runs with no GPU/keys. The agent stub does simple
-> intent + a mock flight tool; replace behind the same `run()` signature.
+> **Implementation note:** STT/agent/TTS are interfaces in `app/services/`; STT and
+> the agent are real (fine-tuned Whisper; LangGraph + flight tool), TTS is still an
+> offline stub, so the API runs with no GPU/keys. The agent stays behind the same
+> `run()` signature — flip back to the rule-based `StubAgent` via `AGENT_BACKEND=stub`.

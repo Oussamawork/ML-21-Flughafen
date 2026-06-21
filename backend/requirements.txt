@@ -6,5 +6,12 @@ pydantic>=2.6
 python-multipart>=0.0.9   # multipart/form-data for audio uploads
 python-dotenv>=1.0          # loads backend/.env at startup
 
+# Agent (TDD-02): LangGraph state graph + tool-calling. The default LLM provider
+# is offline (no key); openai/groq are optional, lazy-imported when selected.
+langgraph>=1.0
+langchain-core>=1.0
+# openai>=1.0    # uncomment when LLM_PROVIDER=openai
+# groq>=0.11     # uncomment when LLM_PROVIDER=groq
+
 # ASR deps (torch, transformers, librosa) — required for the default STT path:
 #   pip install -r ../asr_finetuning/requirements.txt

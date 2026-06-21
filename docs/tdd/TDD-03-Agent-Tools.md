@@ -136,6 +136,7 @@ swap never touches the tools. **Verified live on a free key (2026-06-21).**
       the default urllib UA — found via live test)
 - [x] Caching (TTL) + graceful `FlightUnavailable` on quota/network errors
 - [x] `POST /flight` endpoint (TDD-06) consuming the provider; **live-verified**
-- [ ] `flight_status` / `find_gate` exposed as **agent tools** (with TDD-02)
+- [x] `flight_status` / `find_gate` exposed as **agent tools** (TDD-02;
+      `backend/app/agent/tools/flight_tools.py`, wrapping `FlightProvider`)
+- [x] Tool registry + JSON schemas for the agent (`agent/tools/registry.py`)
 - [ ] `find_service` / `directions` (route + positions + summary) / `faq` over KB
-- [ ] Tool registry + JSON schemas for the agent (TDD-02)

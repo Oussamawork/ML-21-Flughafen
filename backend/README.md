@@ -5,8 +5,10 @@ holds session state, and serves a REST API + a WebSocket. Design:
 `../docs/tdd/TDD-06-Backend-API.md`.
 
 > **STT uses the fine-tuned Whisper by default** (`Amassu/whisper-small-darija`,
-> TDD-01). Agent and TTS still use offline stubs until TDD-02/05 land. Flight
-> data defaults to `mock` (no API key).
+> TDD-01). The **agent is the LangGraph agent** (`AGENT_BACKEND=langgraph`) with an
+> **offline LLM provider** (`LLM_PROVIDER=offline`, no key) that grounds answers in
+> the flight tool; set `LLM_PROVIDER=openai`/`groq` + a key for a hosted model. TTS
+> is still an offline stub (TDD-05). Flight data defaults to `mock` (no API key).
 
 ## Run
 
@@ -35,7 +37,7 @@ You should see:
   "status": "ok",
   "stt_loaded": true,
   "whisper_model": "Amassu/whisper-small-darija",
-  "agent_backend": "stub",
+  "agent_backend": "langgraph",
   "tts_provider": "stub"
 }
 ```
@@ -57,7 +59,9 @@ LOAD_STT=false uvicorn app.main:app --reload
 
 ## Configuration
 
-See `.env.example`: `AIRPORT_ID`, `LOAD_STT`, `WHISPER_MODEL`, `AGENT_BACKEND`,
+See `.env.example`: `AIRPORT_ID`, `LOAD_STT`, `WHISPER_MODEL`, `AGENT_BACKEND`
+(`langgraph`|`stub`), `LLM_PROVIDER` (`offline`|`openai`|`groq`), `LLM_MODEL`,
+`MAX_TOOL_HOPS`, `OPENAI_API_KEY`/`GROQ_API_KEY` (server-side only),
 `FLIGHT_API_PROVIDER` (`mock`|`airlabs`), `AIRLABS_API_KEY`, `FLIGHT_CACHE_TTL`,
 `TTS_PROVIDER`, `CORS_ORIGINS`, `SESSION_TTL`.
 
@@ -100,8 +104,9 @@ backend/
 │   ├── sessions.py      # in-memory session store + TTL
 │   ├── state.py         # process-wide service container
 │   ├── routes.py        # REST + WebSocket, STT→agent→TTS orchestration
-│   └── services/        # stt / agent / tts (interfaces + offline stubs), lang, audio_store
-└── tests/test_api.py    # TestClient end-to-end tests
+│   ├── agent/           # LangGraph agent (TDD-02): graph, providers/, tools/, prompts
+│   └── services/        # stt / agent adapter / tts / flight, lang, audio_store
+└── tests/               # TestClient end-to-end + test_agent.py (offline agent)
 ```
 
 ## STT integration (TDD-01)
