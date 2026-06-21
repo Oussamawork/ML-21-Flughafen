@@ -36,29 +36,52 @@ class StubSTT:
         return text, detect_language(text)
 
 
+_TARGET_SR = 16000
+
+
+def _load_transcriber(model_name: str, language: str):
+    """Build the heavy WhisperTranscriber; isolated so tests can monkeypatch it."""
+    import sys
+
+    asr_dir = Path(__file__).resolve().parents[3] / "asr_finetuning"
+    if str(asr_dir) not in sys.path:
+        sys.path.insert(0, str(asr_dir))
+    from src.transcribe import WhisperTranscriber  # noqa: E402 (lazy, heavy)
+
+    return WhisperTranscriber(model_name, language=language)
+
+
+class AudioDecodeError(Exception):
+    """Raised when uploaded audio bytes can't be decoded (bad/unsupported format)."""
+
+
+def _decode_audio(audio: bytes):
+    """Decode arbitrary uploaded audio bytes to a 16 kHz mono float array."""
+    import librosa
+
+    try:
+        array, _ = librosa.load(io.BytesIO(audio), sr=_TARGET_SR, mono=True)
+    except Exception as exc:  # soundfile/audioread raise various types
+        raise AudioDecodeError(str(exc)) from exc
+    return array
+
+
 class WhisperSTT:
-    """Adapter over the fine-tuned Whisper served by asr_finetuning."""
+    """Adapter over the fine-tuned Whisper served by asr_finetuning.
+
+    Loads `settings.whisper_model` once (default: the DODa fine-tune on the HF
+    Hub). Heavy imports (torch/transformers/librosa) live in module helpers so
+    the rest of the backend stays import-light.
+    """
 
     loaded = True
 
     def __init__(self) -> None:
-        # Make `asr_finetuning` importable (its modules use the `src.` prefix).
-        import sys
-
-        asr_dir = Path(__file__).resolve().parents[3] / "asr_finetuning"
-        if str(asr_dir) not in sys.path:
-            sys.path.insert(0, str(asr_dir))
-        from src.transcribe import WhisperTranscriber  # noqa: E402 (lazy, heavy)
-
-        self._tr = WhisperTranscriber(
-            settings.whisper_model, language=settings.whisper_language
-        )
+        self._tr = _load_transcriber(settings.whisper_model, settings.whisper_language)
 
     def transcribe(self, audio: bytes, filename: str | None = None) -> tuple[str, str]:
-        import librosa
-
-        array, _ = librosa.load(io.BytesIO(audio), sr=16000, mono=True)
-        text = self._tr.transcribe(array, sampling_rate=16000)
+        array = _decode_audio(audio)
+        text = self._tr.transcribe(array, sampling_rate=_TARGET_SR)
         return text, detect_language(text)
 
 

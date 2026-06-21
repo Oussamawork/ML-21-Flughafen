@@ -16,12 +16,12 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Component | TDD | Status | Notes |
 |---|---|---|---|
 | System overview / architecture | TDD-00 | 🟢 | Design written |
-| STT — fine-tuned Whisper | TDD-01 | 🟢 | **Fine-tuned: WER 108→28.8%, CER 64→9.6%** (DODa); pushed to `Amassu/whisper-small-darija`. Pending: wire into backend (`LOAD_STT=true`) |
+| STT — fine-tuned Whisper | TDD-01 | 🟢 | **Fine-tuned: WER 108→28.8%, CER 64→9.6%** (DODa); pushed to `Amassu/whisper-small-darija`; wired into TDD-06 backend (`LOAD_STT=true`) |
 | LLM agent (LangGraph) | TDD-02 | ⚪ | Designed |
 | Agent tools + flight API | TDD-03 | ⚪ | Designed |
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
-| Backend API (FastAPI) | TDD-06 | 🟡 | Skeleton built with offline stubs; 11 tests passing; awaiting real STT/agent/TTS |
+| Backend API (FastAPI) | TDD-06 | 🟡 | Stubs + real STT wired (`LOAD_STT=true` → fine-tuned Whisper); 14 tests passing; awaiting real agent/TTS |
 | Frontend (Next.js) | TDD-07 | 🟡 | Next.js app built (text+voice, RTL, airport selector, tool trace); build green; consumes TDD-06 API |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
@@ -135,6 +135,17 @@ M5 Eval+Deploy. → Currently inside **M1**.
   (HF card). Updated TDD-08, TDD-01 checklist. Branch `feat/tdd-01-eval-results`.
 - **Pending:** user to push model to `Amassu/whisper-small-darija`; then wire into
   backend via `LOAD_STT=true`. Optional: training curve from `trainer_state.json`.
+
+### Session 2026-06-21 (cont.) — TDD-06 STT integration
+- Wired the fine-tuned Whisper into the backend: `WHISPER_MODEL` now defaults to
+  `Amassu/whisper-small-darija`, so `LOAD_STT=true` loads the owned model with no
+  extra config. `WhisperSTT` refactored into testable seams (`_load_transcriber`,
+  `_decode_audio`) so torch/librosa stay off the default import path.
+- Added `tests/test_stt_integration.py`: exercises the real `/transcribe` path and
+  `build_stt()`/health with the heavy bits monkeypatched (no GPU/model download).
+  `pytest`: **14 passing**. Fixed a stale `Oussamawork/...` id in `backend/README.md`.
+- Branch `feat/tdd-06-stt-integration`. **Next:** TDD-02 LangGraph agent to replace
+  the stub; then the voice round-trip is real STT → real agent.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

@@ -24,6 +24,7 @@ from .schemas import (
     TranscribeResponse,
 )
 from .services import audio_store
+from .services.stt import AudioDecodeError
 from .sessions import store as session_store
 from .state import get_services
 
@@ -92,7 +93,10 @@ async def transcribe(
     raw = await audio.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty audio upload.")
-    text, language = services.stt.transcribe(raw, audio.filename)
+    try:
+        text, language = services.stt.transcribe(raw, audio.filename)
+    except AudioDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"Could not decode audio: {exc}")
     session = session_store.get_or_create(session_id)
     session.language = language
     return TranscribeResponse(
@@ -125,8 +129,11 @@ async def converse(
     if not raw:
         raise HTTPException(status_code=400, detail="Empty audio upload.")
 
-    with _timed(latency, "stt"):
-        text_in, language = services.stt.transcribe(raw, audio.filename)
+    try:
+        with _timed(latency, "stt"):
+            text_in, language = services.stt.transcribe(raw, audio.filename)
+    except AudioDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"Could not decode audio: {exc}")
 
     session = session_store.get_or_create(session_id)
     chat_resp = _run_agent_turn(text_in, session, language)

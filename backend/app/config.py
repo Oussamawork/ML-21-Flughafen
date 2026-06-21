@@ -41,8 +41,9 @@ class Settings:
     # --- speech-to-text (TDD-01) ---
     # When false (default) a stub STT is used so the API boots without a GPU/model.
     load_stt: bool = field(default_factory=lambda: _bool("LOAD_STT", False))
+    # Default = the DODa Darija fine-tune on the HF Hub (TDD-01).
     whisper_model: str = field(
-        default_factory=lambda: os.getenv("WHISPER_MODEL", "openai/whisper-small")
+        default_factory=lambda: os.getenv("WHISPER_MODEL", "Amassu/whisper-small-darija")
     )
     whisper_language: str = field(
         default_factory=lambda: os.getenv("WHISPER_LANGUAGE", "arabic")
