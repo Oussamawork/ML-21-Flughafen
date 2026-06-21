@@ -57,7 +57,9 @@ class WhisperTranscriber:
             generated = self.model.generate(
                 inputs, language=self.language, task=self.task, max_length=225
             )
-        return self.processor.batch_decode(generated, skip_special_tokens=True)[0].strip()
+        return self.processor.batch_decode(
+            generated, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )[0].strip()
 
 
 def main() -> None:
