@@ -2,124 +2,182 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { ChatPanel } from "@/components/ChatPanel";
-import { Composer } from "@/components/Composer";
-import { FlightPanel } from "@/components/FlightPanel";
-import { Header } from "@/components/Header";
-import { converse, getAirports, sendChat, speak } from "@/lib/api";
-import type { UiLang } from "@/lib/i18n";
-import { labels, uiDir } from "@/lib/i18n";
-import type { Message } from "@/lib/types";
+import { AgentCard, type AgentMessage } from "@/components/AgentCard";
+import { ApiOutputCard } from "@/components/ApiOutputCard";
+import { FlightCard } from "@/components/FlightCard";
+import { LandingPage } from "@/components/LandingPage";
+import { MapCard } from "@/components/MapCard";
+import { TicketStrip, type Position, type UiLanguage } from "@/components/TicketStrip";
+import { TopNav } from "@/components/TopNav";
+import {
+  FlightLookupError,
+  converse,
+  getFlight,
+  sendChat,
+  speak,
+} from "@/lib/api";
+import type { FlightInfo, Language } from "@/lib/types";
 
-function uid(): string {
-  return Math.random().toString(36).slice(2);
+// SkyGuide's language select -> our backend language codes (darija = ary).
+function toLang(ui: UiLanguage): Language {
+  if (ui === "fr") return "fr";
+  if (ui === "darija") return "ary";
+  return "en";
+}
+
+function play(url: string) {
+  new Audio(url).play().catch(() => {});
 }
 
 export default function Page() {
-  const [ui, setUi] = useState<UiLang>("en");
-  const [airports, setAirports] = useState<string[]>(["AUH"]);
-  const [airport, setAirport] = useState("AUH");
-  const [sessionId, setSessionId] = useState<string | undefined>();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [screen, setScreen] = useState<"home" | "app">("home");
+  const [flightNumber, setFlightNumber] = useState("SV624");
+  const [language, setLanguage] = useState<UiLanguage>("en");
+  const [position, setPosition] = useState<Position>("entrance");
+
+  const [flight, setFlight] = useState<FlightInfo | null>(null);
+  const [payload, setPayload] = useState<unknown>(null);
+  const [loading, setLoading] = useState(false);
+  const [apiOnline, setApiOnline] = useState(false);
+
+  const [messages, setMessages] = useState<AgentMessage[]>([
+    { role: "SkyGuide", text: 'Ask me: "How much left for the gate?"' },
+  ]);
   const [thinking, setThinking] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(true);
+  const [lastSpoken, setLastSpoken] = useState("");
+  const [badge, setBadge] = useState("DL model");
+  const [sessionId, setSessionId] = useState<string | undefined>();
 
-  const t = labels(ui);
-
-  // Load the airport list from the backend (proves airport-agnostic design).
-  useEffect(() => {
-    getAirports()
-      .then((res) => {
-        setAirports(res.airports);
-        setAirport((cur) => (res.airports.includes(cur) ? cur : res.default));
-      })
-      .catch(() => {/* backend offline: keep defaults */});
+  const addAgent = useCallback((m: AgentMessage) => {
+    setMessages((ms) => [...ms, m]);
   }, []);
 
-  const push = useCallback((m: Message) => setMessages((ms) => [...ms, m]), []);
+  // Probe the backend for the agent badge (STT model) + API-online state.
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000"}/health`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((h) => {
+        if (!h) return;
+        setApiOnline(true);
+        if (h.stt_loaded && h.whisper_model) setBadge(`STT: ${h.whisper_model}`);
+      })
+      .catch(() => setApiOnline(false));
+  }, []);
 
-  const handleError = useCallback(() => {
-    push({ id: uid(), role: "assistant", text: t.error });
-  }, [push, t.error]);
+  const loadFlight = useCallback(async () => {
+    const n = flightNumber.trim();
+    if (!n) return;
+    setLoading(true);
+    try {
+      const res = await getFlight({ flightNumber: n, position });
+      setFlight(res.flight);
+      setPayload(res);
+      setApiOnline(true);
+    } catch (err) {
+      setFlight(null);
+      if (err instanceof FlightLookupError && err.kind === "not_found") {
+        addAgent({ role: "SkyGuide", text: `No flight found for ${n} at this airport.` });
+      } else if (err instanceof FlightLookupError && err.kind === "unavailable") {
+        addAgent({ role: "SkyGuide", text: "Flight data is temporarily unavailable." });
+      } else {
+        addAgent({ role: "SkyGuide", text: "Something went wrong. Is the backend running?" });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [flightNumber, position, addAgent]);
 
-  const onSendText = useCallback(
+  // Load the flight as soon as we enter the app (mirrors SkyGuide's showApp()).
+  const enterApp = useCallback(() => {
+    setScreen("app");
+    void loadFlight();
+  }, [loadFlight]);
+
+  const onAsk = useCallback(
     async (text: string) => {
-      push({ id: uid(), role: "user", text });
+      addAgent({ role: "Passenger", text });
       setThinking(true);
       try {
-        const res = await sendChat({ text, sessionId, airportId: airport });
+        const res = await sendChat({ text, sessionId, language: toLang(language) });
         setSessionId(res.session_id);
-        let audioUrl: string | undefined;
-        try {
-          audioUrl = await speak(res.answer, res.language);
-        } catch {/* TTS optional */}
-        push({
-          id: uid(),
-          role: "assistant",
-          text: res.answer,
-          language: res.language,
-          intent: res.intent,
-          toolTrace: res.tool_trace,
-          latencyMs: res.latency_ms,
-          audioUrl,
-        });
+        setPayload(res);
+        addAgent({ role: "SkyGuide", text: res.answer, language: res.language });
+        setLastSpoken(res.answer);
+        if (autoSpeak) {
+          try {
+            play(await speak(res.answer, res.language));
+          } catch {/* TTS optional */}
+        }
       } catch {
-        handleError();
+        addAgent({ role: "SkyGuide", text: "Agent error. Is the backend running?" });
       } finally {
         setThinking(false);
       }
     },
-    [airport, handleError, push, sessionId],
+    [addAgent, sessionId, language, autoSpeak],
   );
 
-  const onSendAudio = useCallback(
+  const onAudio = useCallback(
     async (audio: Blob) => {
       setThinking(true);
       try {
         const res = await converse({ audio, sessionId });
         setSessionId(res.session_id);
-        push({ id: uid(), role: "user", text: res.text_in, language: res.language });
-        push({
-          id: uid(),
-          role: "assistant",
-          text: res.answer,
-          language: res.language,
-          intent: res.intent,
-          toolTrace: res.tool_trace,
-          latencyMs: res.latency_ms,
-          audioUrl: res.audio_url,
-        });
+        setPayload(res);
+        addAgent({ role: "Passenger", text: res.text_in, language: res.language });
+        addAgent({ role: "SkyGuide", text: res.answer, language: res.language });
+        setLastSpoken(res.answer);
+        if (autoSpeak && res.audio_url) play(res.audio_url);
       } catch {
-        handleError();
+        addAgent({ role: "SkyGuide", text: "Voice error. Is the backend running?" });
       } finally {
         setThinking(false);
       }
     },
-    [handleError, push, sessionId],
+    [addAgent, sessionId, autoSpeak],
   );
 
+  const onReplay = useCallback(async () => {
+    const text = lastSpoken || "Ask me a question first.";
+    try {
+      play(await speak(text, toLang(language)));
+    } catch {/* TTS optional */}
+  }, [lastSpoken, language]);
+
+  if (screen === "home") return <LandingPage onEnter={enterApp} />;
+
   return (
-    <main dir={uiDir(ui)} className="flex h-dvh flex-col bg-slate-50">
-      <Header
-        ui={ui}
-        onUiChange={setUi}
-        airports={airports}
-        airport={airport}
-        onAirportChange={setAirport}
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f7fbff,#edf3f7)]">
+      <div className="sg-progress" data-on={loading ? "true" : "false"} />
+      <TopNav variant="app" onHome={() => setScreen("home")} />
+
+      <TicketStrip
+        flightNumber={flightNumber}
+        onFlightNumber={setFlightNumber}
+        language={language}
+        onLanguage={setLanguage}
+        position={position}
+        onPosition={setPosition}
+        onLoad={loadFlight}
+        loading={loading}
       />
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 overflow-hidden p-4 lg:flex-row">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-slate-50">
-          <ChatPanel messages={messages} ui={ui} thinking={thinking} />
-          <Composer
-            ui={ui}
-            disabled={thinking}
-            onSendText={onSendText}
-            onSendAudio={onSendAudio}
-          />
-        </div>
-        <aside className="shrink-0 overflow-y-auto lg:w-96">
-          <FlightPanel ui={ui} airport={airport} />
-        </aside>
-      </div>
-    </main>
+
+      <section className="mx-auto grid max-w-[1240px] grid-cols-[.85fr_1.15fr] gap-[18px] px-[clamp(18px,4vw,58px)] pb-[46px] max-[980px]:grid-cols-1">
+        <FlightCard flight={flight} loading={loading} apiOnline={apiOnline} />
+        <AgentCard
+          messages={messages}
+          badge={badge}
+          thinking={thinking}
+          autoSpeak={autoSpeak}
+          onAutoSpeak={setAutoSpeak}
+          onReplay={onReplay}
+          onAsk={onAsk}
+          onAudio={onAudio}
+        />
+        <MapCard current={position} />
+        <ApiOutputCard payload={payload} />
+      </section>
+    </div>
   );
 }

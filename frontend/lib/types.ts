@@ -57,15 +57,3 @@ export interface FlightResponse {
   flight: FlightInfo;
   route: Record<string, unknown> | null; // reserved for the KB map (TDD-04)
 }
-
-// UI-side chat message model.
-export interface Message {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-  language?: Language;
-  intent?: string;
-  toolTrace?: ToolCall[];
-  audioUrl?: string; // absolute URL to a playable clip
-  latencyMs?: Record<string, number>;
-}

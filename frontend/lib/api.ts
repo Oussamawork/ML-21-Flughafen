@@ -28,7 +28,7 @@ export async function getAirports(): Promise<AirportsResponse> {
   return asJson(await fetch(`${API_BASE}/airports`));
 }
 
-// Lookup kinds the FlightPanel renders differently: not-found vs provider-down.
+// Lookup kinds the dashboard surfaces differently: not-found vs provider-down.
 export type FlightErrorKind = "not_found" | "unavailable" | "error";
 
 export class FlightLookupError extends Error {
@@ -40,6 +40,7 @@ export class FlightLookupError extends Error {
 export async function getFlight(params: {
   flightNumber: string;
   airportId?: string;
+  position?: string;
 }): Promise<FlightResponse> {
   const res = await fetch(`${API_BASE}/flight`, {
     method: "POST",
@@ -47,6 +48,7 @@ export async function getFlight(params: {
     body: JSON.stringify({
       flight_number: params.flightNumber,
       airport_id: params.airportId ?? null,
+      position: params.position ?? null,
     }),
   });
   if (res.ok) return (await res.json()) as FlightResponse;

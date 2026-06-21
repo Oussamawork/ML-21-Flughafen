@@ -22,7 +22,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
 | Backend API (FastAPI) | TDD-06 | 🟡 | Fine-tuned Whisper STT on by default (`LOAD_STT=true`); `/health` exposes `stt_loaded` + `whisper_model`; agent/TTS still stubs; 14 tests passing |
-| Frontend (Next.js) | TDD-07 | 🟡 | Dashboard: chat + **flight-info card** (typed flight no → `/flight`, live-verified vs mock); text+voice, RTL, airport selector, tool trace; build green. Map panel placeholder (needs `/map`) |
+| Frontend (Next.js) | TDD-07 | 🟡 | **SkyGuide-identical redesign**: landing page + 4-card dashboard (Flight `/flight`, Agent chat+mic, Map shell, JSON proof); live-verified vs mock backend; build green. Live map route needs `/map`; agent answers need TDD-02 |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
 
@@ -221,6 +221,28 @@ M5 Eval+Deploy. → Currently inside **M1**.
   `feat/tdd-07-frontend` was already merged).
 - **Next:** `/map` endpoint + Airport-Map panel (TDD-04/06), then TDD-02 agent so
   chat answers are real.
+
+### Session 2026-06-21 (cont.) — TDD-07 redesign to match SkyGuide
+- Per request, **rebuilt the frontend to be visually identical to SkyGuide**
+  (teammate's prototype in `~/Documents/Private/projet_ml_ch`). Explored its
+  vanilla HTML/CSS/JS, then re-implemented the look in our Next.js + Tailwind.
+- **Both screens:** landing page (hero, animated clouds, 6 prep cards) → 4-card
+  dashboard (Flight Information, Airport Agent, Airport Map, Structured API Output)
+  + ticket strip (flight no · Language · "I am here" · Load). New components:
+  `LandingPage`, `TopNav`, `TicketStrip`, `Card`, `FlightCard`, `AgentCard`,
+  `MapCard`, `ApiOutputCard`. Deleted the earlier `FlightPanel`/`Header`/`ChatPanel`/
+  `MessageBubble`/`Composer`. SkyGuide palette/Inter/cloud+map CSS in
+  `tailwind.config.ts`/`globals.css`. Hero image copied to `public/assets/`.
+- **Confirmed deviations:** kept **mic capture** in the agent card (SkyGuide is
+  text-only) to preserve the fine-tuned Whisper demo; **no airport selector**
+  (airport_id defaults to AUH); map renders from an **AUH seed** (`lib/map-seed.ts`,
+  from SkyGuide's `airport_map.json`) until `/map` (TDD-04).
+- **Flight card mapping:** dark hero (`dep → arr`) + label/value rows; Check-in = `—`
+  (KB later), Boarding ← estimated/scheduled, status as plain text.
+- **Verified in a headless browser** against the mock backend: landing → dashboard,
+  SV624 auto-loads (AUH→RUH, gate B12, terminal A), agent `/chat`→`/speak` fired
+  (200s), map shows the green "You" node, JSON proof renders. `next build` green.
+- **Next:** `/map` endpoint + live map route (TDD-04/06), then TDD-02 agent.
 
 ### Session 2026-06-21 (cont.) — backend STT default
 - **STT is now the default path:** `LOAD_STT=true` in config + `.env.example`;
