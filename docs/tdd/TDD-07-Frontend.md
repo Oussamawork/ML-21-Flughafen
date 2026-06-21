@@ -1,7 +1,7 @@
 # TDD-07 — Web Demo Frontend
 
 **Component:** `frontend/`
-**Status:** ⚪ Not started
+**Status:** 🟡 In progress (Next.js app built; text+voice, RTL, airport selector; production build green)
 **Depends on:** TDD-06 (backend API) · **Consumed by:** end users / demo video
 
 ---
@@ -63,10 +63,12 @@ video.
 
 ## 7. Task checklist
 
-- [ ] Next.js app scaffold + API client + env config
-- [ ] Chat panel + text input
-- [ ] Mic capture + `/converse` integration + audio playback
-- [ ] Airport selector (`/airports`)
-- [ ] RTL/LTR + i18n labels
-- [ ] Tool-trace debug panel
+- [x] Next.js app scaffold + typed API client + env config
+- [x] Chat panel + text input (`/chat` + `/speak` playback)
+- [x] Mic capture + `/converse` integration + audio auto-play
+- [x] Airport selector (`/airports`)
+- [x] RTL/LTR + i18n labels (en/fr/ar)
+- [x] Tool-trace panel + per-stage latency display
+- [x] Production build green (`next build`, typecheck clean)
 - [ ] (v2) WebSocket streaming mode
+- [ ] Polish for the demo video once real STT/agent/TTS are wired

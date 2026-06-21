@@ -1,0 +1,71 @@
+// Typed client for the wayfinding backend (TDD-06).
+import type {
+  AirportsResponse,
+  ChatResponse,
+  ConverseResponse,
+  Language,
+} from "./types";
+
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
+  "http://127.0.0.1:8000";
+
+function absolute(url: string): string {
+  return url.startsWith("http") ? url : `${API_BASE}${url}`;
+}
+
+async function asJson<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status} ${res.statusText}: ${detail}`);
+  }
+  return (await res.json()) as T;
+}
+
+export async function getAirports(): Promise<AirportsResponse> {
+  return asJson(await fetch(`${API_BASE}/airports`));
+}
+
+export async function sendChat(params: {
+  text: string;
+  sessionId?: string;
+  airportId?: string;
+  language?: Language;
+}): Promise<ChatResponse> {
+  const res = await fetch(`${API_BASE}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      text: params.text,
+      session_id: params.sessionId ?? null,
+      airport_id: params.airportId ?? null,
+      language: params.language ?? null,
+    }),
+  });
+  return asJson(res);
+}
+
+export async function converse(params: {
+  audio: Blob;
+  sessionId?: string;
+  filename?: string;
+}): Promise<ConverseResponse> {
+  const form = new FormData();
+  form.append("audio", params.audio, params.filename ?? "clip.webm");
+  if (params.sessionId) form.append("session_id", params.sessionId);
+  const res = await fetch(`${API_BASE}/converse`, { method: "POST", body: form });
+  const data = await asJson<ConverseResponse>(res);
+  return { ...data, audio_url: absolute(data.audio_url) };
+}
+
+// Fetch synthesized speech for an assistant text reply (text-mode playback).
+export async function speak(text: string, language: Language): Promise<string> {
+  const res = await fetch(`${API_BASE}/speak`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, language }),
+  });
+  if (!res.ok) throw new Error(`speak failed: ${res.status}`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}

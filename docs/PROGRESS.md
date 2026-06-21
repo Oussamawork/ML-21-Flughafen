@@ -5,7 +5,7 @@ Update this at the end of every working session so any future session (human or
 AI) can resume without re-reading everything.
 
 **Project:** Multilingual Smart Airport Wayfinding Assistant (case study: AUH)
-**Branch:** `feat/tdd-06-backend`
+**Branch:** `feat/tdd-07-frontend`
 
 ---
 
@@ -22,7 +22,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | Knowledge base + RAG | TDD-04 | ⚪ | Designed |
 | TTS | TDD-05 | ⚪ | Designed |
 | Backend API (FastAPI) | TDD-06 | 🟡 | Skeleton built with offline stubs; 11 tests passing; awaiting real STT/agent/TTS |
-| Frontend (Next.js) | TDD-07 | ⚪ | Designed |
+| Frontend (Next.js) | TDD-07 | 🟡 | Next.js app built (text+voice, RTL, airport selector, tool trace); build green; consumes TDD-06 API |
 | Evaluation | TDD-08 | ⚪ | Designed |
 | Deployment (Docker) | TDD-09 | ⚪ | Designed |
 
@@ -113,7 +113,18 @@ M5 Eval+Deploy. → Currently inside **M1**.
 
 ### Session 2026-06-21 (cont.) — merge main into TDD-06 backend
 - Merged the TDD-01 loader/smoke fixes (PR #7) into `feat/tdd-06-backend`;
-  resolved the PROGRESS session-log conflict (kept both entries).
+  resolved the PROGRESS session-log conflict (kept both entries). PR #6 merged.
+
+### Session 2026-06-21 (cont.) — TDD-07 frontend
+- Built the Next.js (App Router) demo UI in `frontend/`: text + voice chat that
+  calls the backend (`/chat` + `/speak`, and `/converse` for voice), auto-plays
+  replies, RTL/LTR per message, EN/FR/AR UI labels, airport selector from
+  `/airports`, and a per-message tool-trace + latency panel.
+- Typed API client (`lib/api.ts`) mirroring the TDD-06 contracts; `MediaRecorder`
+  hook for the mic. Bumped Next to 14.2.35 (security patch).
+- Verified locally: `tsc --noEmit` clean + `next build` green (4 static pages).
+- Branch `feat/tdd-07-frontend`. PR #8. **Next:** end-to-end demo now backend is
+  merged; wire real STT/agent/TTS as they land; optional WebSocket streaming.
 
 ### Session 2026-06-21 (cont.) — TDD-01 fine-tune results
 - Fine-tune finished on a Colab T4 (3000 steps). Recorded base-vs-fine-tuned eval
