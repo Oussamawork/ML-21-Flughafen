@@ -61,7 +61,8 @@ class Settings:
         default_factory=lambda: os.getenv("AGENT_BACKEND", "langgraph")
     )
     # LLM behind a provider interface. "offline" (default) is deterministic and
-    # needs no key; "openai"/"groq" are lazy-imported when selected + a key is set.
+    # needs no key; "anthropic"/"openai"/"groq" are lazy-imported when selected + a
+    # key is set. A hosted primary falls back to Groq then offline (build_langgraph_agent).
     llm_provider: str = field(
         default_factory=lambda: os.getenv("LLM_PROVIDER", "offline")
     )
@@ -73,6 +74,12 @@ class Settings:
     )
     openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     groq_api_key: str = field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""))
+    anthropic_api_key: str = field(default_factory=lambda: os.getenv("ANTHROPIC_API_KEY", ""))
+    # Model used by the Groq fallback when the primary is Anthropic (llm_model is
+    # the primary's model, e.g. a Claude id, which Groq wouldn't accept).
+    groq_fallback_model: str = field(
+        default_factory=lambda: os.getenv("GROQ_FALLBACK_MODEL", "llama-3.3-70b-versatile")
+    )
 
     # --- flight data (TDD-03) ---
     # "mock" (default) = canned flights, no network/key. "airlabs" = real lookup.
