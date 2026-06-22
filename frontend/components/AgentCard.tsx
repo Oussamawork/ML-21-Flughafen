@@ -37,10 +37,13 @@ export function AgentCard({
 }: Props) {
   const [text, setText] = useState("");
   const recorder = useRecorder();
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
+  // Scroll only the messages box to the newest line — never the whole page
+  // (scrollIntoView would scroll every ancestor, yanking the window down).
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages, thinking]);
 
   const submit = () => {
@@ -82,7 +85,7 @@ export function AgentCard({
         </button>
       </div>
 
-      <div className="grid h-[190px] content-start gap-2 overflow-auto rounded-lg border border-line bg-white p-3">
+      <div ref={listRef} className="grid h-[190px] content-start gap-2 overflow-auto rounded-lg border border-line bg-white p-3">
         {messages.map((m, i) => (
           <p
             key={i}
@@ -93,7 +96,6 @@ export function AgentCard({
           </p>
         ))}
         {thinking && <p className="m-0 leading-[1.45] text-muted">SkyGuide: …</p>}
-        <div ref={endRef} />
       </div>
 
       <form
