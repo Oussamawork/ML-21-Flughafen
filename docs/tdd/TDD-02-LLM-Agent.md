@@ -29,9 +29,11 @@ tool/RAG results, and produces a contextual reply **in the passenger's language*
   kept in-package so the backend imports it cleanly).
 - **LLM behind a provider interface** (`LLMProvider.complete`), selected by
   `LLM_PROVIDER`: **`offline` (default)** is deterministic and **needs no API key**
-  (keeps the pipeline runnable offline); `openai` (GPT-4o-mini) and `groq`
-  (Llama 3.1) are lazy-imported and used once a key is wired. The model is a config
-  choice made later — the graph/tools are model-agnostic.
+  (keeps the pipeline runnable offline); `anthropic` (Claude — best quality/Darija/
+  tool-use), `openai`, and `groq` are lazy-imported and used once a key is wired.
+  A **hosted primary falls back to Groq then offline** (`FallbackProvider`) so an
+  outage/limit degrades instead of crashing. The model is a config choice — the
+  graph/tools are model-agnostic.
 - Enabled by default: `AGENT_BACKEND=langgraph` (fallback `stub`).
 
 ### 3.2 Graph

@@ -362,6 +362,18 @@ deployment (TDD-09).
   separate branch `fix/agent-page-scroll` (PR off main).
 - **Next:** TDD-09 (Docker deployment) — the last component.
 
+### Session 2026-06-22 (cont.) — Claude (Anthropic) provider + fallback chain
+- Added `AnthropicProvider` (`LLM_PROVIDER=anthropic`, Claude's content-block tool
+  API — its own adapter) + a `FallbackProvider`: a hosted primary now degrades
+  **Anthropic → Groq → offline** so an outage/limit never crashes the turn.
+- Why: Groq (Llama 3.3) leaked English into Darija and mis-grounded (placeholder
+  tool args → wrong concourse). **Live-verified Claude Haiku 4.5**: fully-Darija
+  output (even "duty free"→"المتاجر الحرة", "Concourse B"→"الصالة B"), clean
+  `flight_status`→`directions(gate="B12")`, correct grounding (535 m, Concourse B).
+- `anthropic` SDK lazy-imported (offline default still pulls no SDK — asserted in
+  tests); config `ANTHROPIC_API_KEY` + `GROQ_FALLBACK_MODEL`. 66 tests.
+- **Next:** open the PR; pick the production model (Haiku vs Sonnet) by cost/quality.
+
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
 - Did: ...

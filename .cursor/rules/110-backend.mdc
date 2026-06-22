@@ -22,7 +22,8 @@ pytest                               # end-to-end tests (offline stubs)
   no GPU/keys: `stt` (stub ↔ `WhisperSTT` via `LOAD_STT=true`, model
   `Amassu/whisper-small-darija`, **on by default**), `agent` (**LangGraph by
   default**, TDD-02, in `app/agent/` — LLM behind a provider interface, offline/no-key
-  default; `AGENT_BACKEND=stub` is the explicit opt-out), `tts` (**local MMS-TTS by
+  default, `anthropic`/`groq`/`openai` when keyed (hosted→Groq→offline fallback);
+  `AGENT_BACKEND=stub` is the explicit opt-out), `tts` (**local MMS-TTS by
   default**, TDD-05, on-CPU/no-key; `TTS_PROVIDER=stub` for silent test audio).
   Replace a stub **behind the same signature** — don't change the interface lightly
   (the frontend depends on it).
