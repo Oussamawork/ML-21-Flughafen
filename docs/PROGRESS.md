@@ -20,7 +20,7 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | LLM agent (LangGraph) | TDD-02 | 🟢 | **LangGraph agent built + default-on** (`AGENT_BACKEND=langgraph`); LLM behind a provider interface, **offline default (no key)**, Groq/OpenAI when keyed; calls flight + KB tools; live-verified |
 | Agent tools + flight API | TDD-03 | 🟢 | AirLabs flight provider + `/flight` (mock default; live-verified); **full tool catalogue wired**: `flight_status`/`find_gate` + KB `directions`/`find_service`/`faq` |
 | Knowledge base + RAG | TDD-04 | 🟢 | **Built** in `backend/app/kb/`: per-`airport_id` YAML pack + map-graph `directions` + service index + **ChromaDB/multilingual-e5 FAQ RAG** (retriever interface: chroma default, keyword for tests); `/map` endpoint; live-verified (semantic EN/FR/AR; Darija weaker — see open Qs) |
-| TTS | TDD-05 | 🟢 | **Built** — real **local MMS-TTS** (`facebook/mms-tts-{ara,fra,eng}`, on-CPU, no key, `TTS_PROVIDER=local` default) behind the existing `TTS` interface; `/speak`+`/converse` now speak; ar/fr/en (Darija→Arabic); live-verified. Tests keep stub TTS |
+| TTS | TDD-05 | 🟢 | **Built** — real **local MMS-TTS** (`facebook/mms-tts-{ara,fra,eng}`, on-CPU, no key, `TTS_PROVIDER=local` default) behind the existing `TTS` interface; `/speak`+`/converse` now speak; ar/fr/en (Darija→Arabic); live-verified. Hosted **ElevenLabs** (`TTS_PROVIDER=elevenlabs`) merged — natural voice that reads gate codes/numbers, degrades to MMS on error. Tests keep stub TTS |
 | Backend API (FastAPI) | TDD-06 | 🟢 | All stages real: STT (fine-tuned Whisper, `LOAD_STT=true`), agent (LangGraph), KB+RAG, TTS (local MMS-TTS); `/health` reports active backends; `/transcribe /chat /speak /converse /flight /map /airports` + WS; 61 tests passing |
 | Frontend (Next.js) | TDD-07 | 🟡 | **SkyGuide-identical redesign**: landing page + 4-card dashboard (Flight `/flight` + KB check-in, Agent chat+mic on the real agent, **live Map route from `/map`**, JSON proof); live-verified; build green. Remaining: optional WebSocket streaming |
 | Evaluation | TDD-08 | 🟢 | **Built** — `evaluation/` harness scores intent/tool/facts/language/FAQ-hit/latency/robustness over a labeled ar/ary/fr/en set vs the deterministic offline agent (reproducible). Latest: intent 100%, facts 100%, tools 100%, lang 89%, robustness 4/4; report `evaluation/reports/system_eval.md`; pytest guard `tests/test_eval.py` |
@@ -373,6 +373,20 @@ deployment (TDD-09).
 - `anthropic` SDK lazy-imported (offline default still pulls no SDK — asserted in
   tests); config `ANTHROPIC_API_KEY` + `GROQ_FALLBACK_MODEL`. 66 tests.
 - **Next:** open the PR; pick the production model (Haiku vs Sonnet) by cost/quality.
+
+### Session 2026-06-22 (cont.) — ElevenLabs hosted TTS
+- Added `ElevenLabsTTS` (`TTS_PROVIDER=elevenlabs`) behind the existing `TTS`
+  interface: natural multilingual voice that **reads gate codes/numbers** (local
+  MMS drops embedded Latin/digits and sounds robotic). Stdlib HTTP, MP3 out,
+  phrase-cached (free-tier quota), and **degrades to local MMS on any API error**.
+- Config: `ELEVENLABS_API_KEY`/`ELEVENLABS_VOICE_ID`/`ELEVENLABS_MODEL`
+  (`eleven_multilingual_v2`). Local MMS stays the no-key default. 67 tests
+  (+ fallback/key unit tests; 68 after merge). **Live-verified** voice
+  `PmGnwGtnBs40iau7JfoF` (paid plan): `/speak` returns real MP3 reading "B12"/"535".
+- End-to-end verified **Claude + ElevenLabs together**: Claude answers SV624 fully in
+  Darija (gate B12, Terminal A, 18:55) → ElevenLabs speaks it. **Merged to `main`**
+  (after merging updated main carrying the Anthropic provider). **Next:** TDD-09 deploy
+  + `docs/readme` are the last open PRs.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

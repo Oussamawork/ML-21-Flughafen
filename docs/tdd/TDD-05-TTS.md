@@ -82,6 +82,8 @@ Provider SDK/HTTP (`elevenlabs` or `azure-cognitiveservices-speech` / REST),
 - [x] `synthesize()` returning WAV bytes + content type (float→16-bit PCM); phrase cache
 - [x] `/speak` + `/converse` glue (TDD-06) — already wired; no change needed
 - [x] Tests (`tests/test_tts.py`, MMS engine faked → no model download); 61 backend tests
-- [ ] (opt) hosted ElevenLabs/Azure adapter for premium quality (same interface)
+- [x] hosted **ElevenLabs** adapter (`TTS_PROVIDER=elevenlabs`) — natural voice that
+      reads gate codes/numbers (MMS drops them); phrase-cached; degrades to local MMS
+      on error. (Azure/OpenAI can slot in the same way.)
 - Notes: MMS Arabic mispronounces embedded Latin (e.g. gate "B12"); Darija uses the
   Arabic voice — both acceptable (TTS is infra; the owned Darija model is Whisper).

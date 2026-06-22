@@ -92,8 +92,13 @@ is hard-coded in code (TDD-00 airport-agnostic rule).
 (`TTS_PROVIDER=local`): Meta `facebook/mms-tts-{ara,fra,eng}` on the installed
 `transformers`/`torch` stack — **no key, offline**, one model per language
 (lazy-loaded, ~145 MB each downloaded on first use; ar/fr/en, Darija→Arabic).
-`TTS_PROVIDER=stub` returns a silent WAV (used by tests). Hosted ElevenLabs/Azure
-can be added behind the same `TTS` interface later.
+`TTS_PROVIDER=stub` returns a silent WAV (used by tests).
+
+For a **natural voice that also reads gate codes/numbers** (MMS drops embedded
+Latin/digits), set `TTS_PROVIDER=elevenlabs` + `ELEVENLABS_API_KEY` (optionally
+`ELEVENLABS_VOICE_ID`/`ELEVENLABS_MODEL`). It returns MP3, phrase-caches to spare
+the free-tier quota, and **degrades to local MMS** on any API error. Azure/OpenAI
+TTS can slot in the same way behind the `TTS` interface.
 
 ## Test
 
