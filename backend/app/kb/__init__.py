@@ -8,7 +8,6 @@ and the RAG retriever behind one airport-agnostic object. Built once and shared
 from __future__ import annotations
 
 from . import graph
-from .gates import gate_markers, gate_xy
 from .loader import AirportNotFound, Pack, available_airports, load_pack
 from .retriever import Retriever, build_retriever
 from .services_index import checkin_for, find_services
@@ -25,18 +24,13 @@ class KnowledgeBase:
 
     # --- map / directions (graph) -----------------------------------------
     def layout(self, airport_id: str) -> dict:
-        """Nodes + positions + zones + per-gate markers for the frontend map."""
+        """Nodes + positions + zones for the frontend map (no route)."""
         pack = load_pack(airport_id)
         return {
             "nodes": pack.node_names,
             "positions": pack.positions,
             "zones": pack.layout.get("zones", []),
-            "gates": gate_markers(pack.layout),
         }
-
-    def gate_xy(self, airport_id: str, gate: str | None) -> dict | None:
-        """Exact map position of a specific gate code (A1..D49)."""
-        return gate_xy(load_pack(airport_id).layout, gate)
 
     def directions(
         self,

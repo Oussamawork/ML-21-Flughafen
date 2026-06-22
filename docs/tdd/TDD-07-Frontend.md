@@ -43,12 +43,10 @@ then chats by voice/text. Panels:
   as the backdrop (`public/assets/terminal-a-map.png`, © airportmaps.com, case-study
   use), with a green **"You are here"** pin and the flight's **concourse highlighted
   red + the real gate label** (e.g. "B12"), from `POST /map` (TDD-04). The four
-  **every gate A1–D49** is marked along its concourse (hover shows the code) and is
-  **clickable to route there**; "Back to my gate" resets; distance/walk banner on top.
-  Gate markers + the flight's exact `gate_position` come from the KB (`/map`,
-  interpolated along each concourse arm from `concourse_gates` geometry); node
-  `positions` (% over the image) too; `lib/map-seed.ts` is the offline fallback.
-  Real AirLabs gates (C33, B20…) resolve + pin precisely, so live flights light up the map.
+  concourses A–D are **clickable to explore** (sends `to_node`, "Back to my gate"
+  resets); distance/walk banner on top. Node `positions` (% over the image) come from
+  the KB; `lib/map-seed.ts` is the pre-fetch/offline fallback. Real AirLabs gates
+  (C33, B20…) resolve to their concourse, so live flights light up the map.
 - **Airport Agent card** — chat (Passenger/SkyGuide lines) with a **mic button**
   (`MediaRecorder` → 16 kHz WAV → `/converse` → fine-tuned Whisper), typed
   `/chat`, a voice-over toggle + replay (`/speak`), and per-message RTL.
