@@ -1,7 +1,11 @@
 # TDD-08 — Evaluation & Testing
 
 **Component:** `evaluation/`
-**Status:** 🟡 In progress — ASR result recorded (WER 108.18%→28.79%); other axes pending
+**Status:** 🟢 Built — ASR result recorded (WER 108→28.8%) **+ system harness**
+(`evaluation/run_eval.py`): intent/tool/answer-fact/language/FAQ-hit/latency/robustness
+over a labeled multilingual set, scored against the deterministic offline agent
+(reproducible, key-free). Latest: intent 100%, facts 100%, tools 100%, language 89%,
+robustness 4/4. A pytest guard (`tests/test_eval.py`) gates regressions.
 **Depends on:** all components · **Feeds:** report + demo video
 
 ---
@@ -82,9 +86,11 @@ Full write-up + qualitative before/after: [`../RESULTS_TDD-01.md`](../RESULTS_TD
 
 ## 8. Task checklist
 
-- [ ] ASR base-vs-FT WER/CER table
-- [ ] Intent/entity test set + scorer
-- [ ] Scenario harness `run_eval.py` against the API
-- [ ] Latency aggregation (p50/p95)
-- [ ] Robustness cases
-- [ ] Generate report tables/plots
+- [x] ASR base-vs-FT WER/CER table (`docs/RESULTS_TDD-01.md`)
+- [x] Intent/entity + answer-fact + language scorer (`evaluation/scorers.py`) over a
+      labeled ar/ary/fr/en set (`evaluation/datasets/scenarios.yaml`)
+- [x] Scenario harness `run_eval.py` (in-process, deterministic offline agent)
+- [x] Latency aggregation (p50/p95)
+- [x] Robustness cases (flight down, LLM failure→offline, unknown flight, code-mixed)
+- [x] Generate report tables (`evaluation/reports/system_eval.md`) + pytest guard
+- [ ] (opt) LLM-as-judge qualitative pass (Groq); (opt) matplotlib plots
