@@ -13,11 +13,16 @@ SYSTEM_PROMPT = (
     "baggage, and time values **exactly** as returned — never change, swap, or guess "
     "them. The flight number is a typed field — do not invent it. For wayfinding, call "
     "`directions` and give a SHORT answer: the destination, total distance and walking "
-    "time, then tell the user to follow the highlighted route on the map. Do NOT list "
+    "time, then tell the user to follow the route on the map. Do NOT list "
     "every step — the map shows the full path. For places (pharmacy, lounge, restroom, "
     "food, atm) call `find_service`. For general airport questions call `faq` and cite "
-    "its sources. Call a tool at most once per flight per turn. If a lookup fails or a "
-    "field is missing, say so briefly."
+    "its sources. If a lookup fails or a field is missing, say so briefly.\n"
+    "Tool use: to route to a flight's gate, call `flight_status` ONCE, then call "
+    "`directions` with the gate's literal value from that result (e.g. gate=\"B12\"); "
+    "do NOT also call `find_gate`. NEVER pass placeholder text such as "
+    "\"result_of_find_gate\", \"current_location\", or \"gate\" as an argument — pass "
+    "the real value, and omit `from_node` and `to_node` (the passenger position is "
+    "already provided; the gate resolves the destination)."
 )
 
 # Human-readable language names for the per-turn language lock.
@@ -36,10 +41,12 @@ def system_prompt(airport_id: str, language: str) -> str:
     English route-step names into Chinese). Pin the language + forbid mixing."""
     name = LANG_NAMES.get(language, "English")
     lock = (
-        f" Respond ENTIRELY in {name} ({language}). Use only this language and its "
-        "script — never mix in English, Chinese, or any other language. Translate "
-        "route step names into this language; keep only identifiers like gate codes "
-        "(e.g. B12) and terminal letters (e.g. A) verbatim."
+        f" Respond ENTIRELY in {name} ({language}), in its own script. Translate "
+        "EVERY word — including 'route', 'map', 'distance', 'walking time', and all "
+        "zone/concourse names (duty free, security, check-in, baggage, concourse). "
+        "Do NOT leave any English or French word in the answer. The ONLY tokens kept "
+        "verbatim are: flight numbers, gate codes (e.g. B22), terminal/concourse "
+        "letters (e.g. A, B), and the airport name."
     )
     return SYSTEM_PROMPT.format(airport_id=airport_id) + lock
 
