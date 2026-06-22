@@ -30,9 +30,8 @@ export function TopNav({ variant, onHome }: Props) {
       <Brand />
       {variant === "home" ? (
         <div className="flex flex-wrap justify-end gap-2">
-          <span className={PILL}>DL Agent</span>
-          <span className={PILL}>Airport Map</span>
-          <span className={PILL}>Trial AUH API</span>
+          <span className={PILL}>Arabic · Darija · French · English</span>
+          <span className={PILL}>Voice + Text</span>
         </div>
       ) : (
         <button type="button" onClick={onHome} className={PILL}>
