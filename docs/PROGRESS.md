@@ -384,9 +384,13 @@ deployment (TDD-09).
   (+ fallback/key unit tests; 68 after merge). **Live-verified** voice
   `PmGnwGtnBs40iau7JfoF` (paid plan): `/speak` returns real MP3 reading "B12"/"535".
 - End-to-end verified **Claude + ElevenLabs together**: Claude answers SV624 fully in
-  Darija (gate B12, Terminal A, 18:55) → ElevenLabs speaks it. **Merged to `main`**
-  (after merging updated main carrying the Anthropic provider). **Next:** TDD-09 deploy
-  + `docs/readme` are the last open PRs.
+  Darija (gate B12, Terminal A, 18:55) → ElevenLabs speaks it.
+- Two follow-up fixes so the voice actually reads codes/numbers: (1) `_speech_text()`
+  strips markdown before synthesis (`**B15**` was spoken as nothing), applied in both
+  TTS paths; (2) `apply_text_normalization="on"` in the ElevenLabs request — matches the
+  web UI, makes it read gate codes/flight numbers/times embedded in Arabic (`B15`,
+  `EY102`, `19:19`). **Merged to `main` (PR #27).** **Next:** TDD-09 deploy + `docs/readme`
+  are the last open PRs.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
