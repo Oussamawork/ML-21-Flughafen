@@ -59,7 +59,8 @@ LOAD_STT=false uvicorn app.main:app --reload
 
 ## Configuration
 
-See `.env.example`: `AIRPORT_ID`, `LOAD_STT`, `WHISPER_MODEL`, `AGENT_BACKEND`
+See `.env.example`: `AIRPORT_ID`, `LOAD_STT`, `WHISPER_MODEL`, `WHISPER_NUM_BEAMS`
+(beam search, default 5 — cuts Darija mis-segmentations; 1 = greedy/faster), `AGENT_BACKEND`
 (`langgraph`|`stub`), `LLM_PROVIDER` (`offline`|`openai`|`groq`), `LLM_MODEL`,
 `MAX_TOOL_HOPS`, `OPENAI_API_KEY`/`GROQ_API_KEY` (server-side only),
 `FLIGHT_API_PROVIDER` (`mock`|`airlabs`), `AIRLABS_API_KEY`, `FLIGHT_CACHE_TTL`,

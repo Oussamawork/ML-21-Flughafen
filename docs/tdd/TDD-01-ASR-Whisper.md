@@ -80,11 +80,14 @@ Files (already in repo):
 ```python
 class WhisperTranscriber:
     def __init__(self, model_name: str, language="arabic", task="transcribe",
-                 device: str | None = None): ...
+                 device: str | None = None, num_beams: int = 1): ...
     def transcribe(self, audio: str | "np.ndarray", sampling_rate: int = 16000) -> str
 ```
 - `audio`: file path or 1-D float array @ 16 kHz mono.
 - returns: transcript string (Arabic script for ar/ary).
+- `num_beams`: beam-search width (backend default 5 via `WHISPER_NUM_BEAMS`). Beam
+  search reduces Darija mis-segmentations (e.g. `الصيدلية` → `الصيدة ليا`) at a small
+  latency cost; `1` = greedy.
 
 ### 4.2 Backend endpoint (defined fully in TDD-06)
 `POST /transcribe` · multipart audio → `{ "text": str, "language": str }`

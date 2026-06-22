@@ -54,6 +54,10 @@ class Settings:
     whisper_language: str = field(
         default_factory=lambda: os.getenv("WHISPER_LANGUAGE", "arabic")
     )
+    # Beam search reduces mis-segmentations (e.g. الصيدلية → الصيدة ليا); 1 = greedy.
+    whisper_num_beams: int = field(
+        default_factory=lambda: int(os.getenv("WHISPER_NUM_BEAMS", "5"))
+    )
 
     # --- agent (TDD-02) ---
     # "langgraph" = the LangGraph agent (default); "stub" = rule-based fallback.

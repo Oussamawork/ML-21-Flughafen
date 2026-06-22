@@ -38,7 +38,7 @@ class StubSTT:
 _TARGET_SR = 16000
 
 
-def _load_transcriber(model_name: str, language: str):
+def _load_transcriber(model_name: str, language: str, num_beams: int = 1):
     """Build the heavy WhisperTranscriber; isolated so tests can monkeypatch it."""
     import sys
 
@@ -47,7 +47,7 @@ def _load_transcriber(model_name: str, language: str):
         sys.path.insert(0, str(asr_dir))
     from src.transcribe import WhisperTranscriber  # noqa: E402 (lazy, heavy)
 
-    return WhisperTranscriber(model_name, language=language)
+    return WhisperTranscriber(model_name, language=language, num_beams=num_beams)
 
 
 class AudioDecodeError(Exception):
@@ -76,7 +76,9 @@ class WhisperSTT:
     loaded = True
 
     def __init__(self) -> None:
-        self._tr = _load_transcriber(settings.whisper_model, settings.whisper_language)
+        self._tr = _load_transcriber(
+            settings.whisper_model, settings.whisper_language, settings.whisper_num_beams
+        )
 
     def transcribe(self, audio: bytes, filename: str | None = None) -> tuple[str, str]:
         array = _decode_audio(audio)

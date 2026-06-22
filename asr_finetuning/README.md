@@ -75,6 +75,7 @@ python -m src.evaluate_model --config config/default.yaml \
     --model.name ./outputs/whisper-small-darija          # fine-tuned
 
 # 4. Transcribe a clip (what the agent calls at inference time)
+#    --num_beams defaults to 5 (beam search cuts Darija mis-segmentations); 1 = greedy.
 python -m src.transcribe --model.name ./outputs/whisper-small-darija --audio clip.wav
 ```
 
