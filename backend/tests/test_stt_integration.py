@@ -18,9 +18,10 @@ from app.services import stt as stt_module
 
 
 class _FakeTranscriber:
-    def __init__(self, model_name, language="arabic"):
+    def __init__(self, model_name, language="arabic", num_beams=1):
         self.model_name = model_name
         self.language = language
+        self.num_beams = num_beams
 
     def transcribe(self, audio, sampling_rate=16000):
         return "بغيت نمشي للبوابة"
@@ -33,7 +34,9 @@ def whisper_backend(monkeypatch):
     monkeypatch.setattr(
         stt_module,
         "_load_transcriber",
-        lambda model_name, language: _FakeTranscriber(model_name, language),
+        lambda model_name, language, num_beams=1: _FakeTranscriber(
+            model_name, language, num_beams
+        ),
     )
     monkeypatch.setattr(stt_module, "_decode_audio", lambda audio: [0.0, 0.0, 0.0])
 
