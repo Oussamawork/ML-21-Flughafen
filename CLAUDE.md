@@ -13,7 +13,8 @@ the fine-tuned **ASR** (`asr_finetuning/`, the graded ML contribution), the
 **FastAPI backend** (`backend/`, with AirLabs flight data), the **Next.js
 frontend** (`frontend/`), and the **LangGraph agent** (TDD-02, `backend/app/agent/`,
 on by default; the LLM sits behind a provider interface — offline/no-key by
-default, Groq/OpenAI when a key is set), and the **knowledge base + RAG** (TDD-04,
+default, Anthropic/Groq/OpenAI when a key is set, with a hosted→Groq→offline
+fallback chain), and the **knowledge base + RAG** (TDD-04,
 `backend/app/kb/`): a per-`airport_id` data pack with map-graph directions, a
 service index, and ChromaDB+multilingual-embedding FAQ retrieval, exposed as the
 agent's `directions`/`find_service`/`faq` tools and a `/map` endpoint, and **TTS** (TDD-05,

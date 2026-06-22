@@ -8,8 +8,10 @@ import types
 
 import torch
 
+import pytest
+
 from app.config import settings
-from app.services.tts import MmsTTS, StubTTS, build_tts
+from app.services.tts import ElevenLabsTTS, MmsTTS, StubTTS, _speech_text, build_tts
 
 
 class _FakeTokenizer:
@@ -38,6 +40,14 @@ def _provider_with_fakes():
     for mid in set(prov._models.values()):
         prov._loaded[mid] = fake
     return prov, model
+
+
+def test_speech_text_strips_markdown_around_codes():
+    # `**B15**` was spoken as nothing — the voice must read the bare code.
+    src = "البوابة هي **B15** في الطرمينال **A**. الرحلة `EY102`."
+    out = _speech_text(src)
+    assert "**" not in out and "`" not in out
+    assert "B15" in out and "A" in out and "EY102" in out
 
 
 def test_synthesize_returns_valid_wav():
@@ -71,3 +81,15 @@ def test_build_tts_dispatch(monkeypatch):
     assert isinstance(build_tts(), MmsTTS)
     monkeypatch.setattr(settings, "tts_provider", "stub")
     assert isinstance(build_tts(), StubTTS)
+
+
+def test_elevenlabs_requires_key():
+    with pytest.raises(RuntimeError):
+        ElevenLabsTTS("", "voice", "model")
+
+
+def test_elevenlabs_degrades_on_api_error():
+    el = ElevenLabsTTS("k", "voice", "model", fallback=StubTTS())
+    el._fetch = lambda _text: (_ for _ in ()).throw(RuntimeError("quota"))
+    audio, content_type = el.synthesize("Your gate is B12", "en")
+    assert content_type == "audio/wav" and audio[:4] == b"RIFF"  # stub fallback
