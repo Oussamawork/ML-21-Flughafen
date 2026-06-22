@@ -104,7 +104,7 @@ def test_flight_endpoint_found():
     assert body["flight"]["gate"] == "B12"
     assert body["flight"]["direction"] == "departure"
     # KB map (TDD-04) now enriches the flight with a route to the gate + check-in.
-    assert body["route"]["route"][-1] == "gate-b12"
+    assert body["route"]["route"][-1] == "concourse-b"  # gate B12 -> concourse B
     assert body["route"]["route_summary"]["distance_m"] > 0
     assert "Saudia" in body["checkin"]["zone"]
 

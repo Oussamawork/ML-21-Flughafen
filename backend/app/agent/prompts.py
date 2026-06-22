@@ -9,15 +9,39 @@ from __future__ import annotations
 
 SYSTEM_PROMPT = (
     "You are a multilingual airport wayfinding assistant for airport {airport_id}. "
-    "Reply in the user's language (Arabic `ar`, Darija `ary`, French `fr`, or "
-    "English `en`). Ground every answer in the tool results and copy gate, terminal, "
+    "Ground every answer in the tool results and copy gate, terminal, "
     "baggage, and time values **exactly** as returned — never change, swap, or guess "
     "them. The flight number is a typed field — do not invent it. For wayfinding, call "
-    "`directions` and read out the route and walking distance. For places (pharmacy, "
-    "lounge, restroom, food, atm) call `find_service`. For general airport questions "
-    "call `faq` and cite its sources. Call a tool at most once per flight per turn. If "
-    "a lookup fails or a field is missing, say so briefly."
+    "`directions` and give a SHORT answer: the destination, total distance and walking "
+    "time, then tell the user to follow the highlighted route on the map. Do NOT list "
+    "every step — the map shows the full path. For places (pharmacy, lounge, restroom, "
+    "food, atm) call `find_service`. For general airport questions call `faq` and cite "
+    "its sources. Call a tool at most once per flight per turn. If a lookup fails or a "
+    "field is missing, say so briefly."
 )
+
+# Human-readable language names for the per-turn language lock.
+LANG_NAMES = {
+    "ar": "Arabic",
+    "ary": "Moroccan Darija (written in Arabic script)",
+    "fr": "French",
+    "en": "English",
+}
+
+
+def system_prompt(airport_id: str, language: str) -> str:
+    """System prompt with a strict single-language lock for the hosted LLM.
+
+    Without naming the exact target language, models code-switch (e.g. rendering
+    English route-step names into Chinese). Pin the language + forbid mixing."""
+    name = LANG_NAMES.get(language, "English")
+    lock = (
+        f" Respond ENTIRELY in {name} ({language}). Use only this language and its "
+        "script — never mix in English, Chinese, or any other language. Translate "
+        "route step names into this language; keep only identifiers like gate codes "
+        "(e.g. B12) and terminal letters (e.g. A) verbatim."
+    )
+    return SYSTEM_PROMPT.format(airport_id=airport_id) + lock
 
 # A Darija example mirroring the proposal ("ayna bawwabati, rihlati SV-624").
 FEW_SHOT = [
@@ -52,10 +76,10 @@ _TEMPLATES = {
         "en": "I'm the airport assistant. I can help with gates, flights and services.",
     },
     "directions": {
-        "ar": "اتجه إلى {dest}: {route}. المسافة {distance} متر، حوالي {minutes} دقيقة مشياً.",
-        "ary": "سير ل{dest}: {route}. المسافة {distance} متر، تقريباً {minutes} دقيقة بالمشي.",
-        "fr": "Dirigez-vous vers {dest} : {route}. Distance {distance} m, environ {minutes} min à pied.",
-        "en": "Head to {dest}: {route}. Distance {distance} m, about {minutes} min walk.",
+        "ar": "وجهتك {dest} — المسافة {distance} متر، حوالي {minutes} دقائق مشياً. اتبع المسار المميَّز على الخريطة.",
+        "ary": "سير ل{dest} — المسافة {distance} متر، تقريباً {minutes} دقائق على الرجلين. تبع الطريق المبيّن فالخريطة.",
+        "fr": "Direction {dest} — {distance} m, environ {minutes} min à pied. Suivez l'itinéraire indiqué sur la carte.",
+        "en": "Head to {dest} — {distance} m, about {minutes} min on foot. Follow the highlighted route on the map.",
     },
     "no_route": {
         "ar": "لم أتمكن من إيجاد مسار. حدّد وجهتك أو رقم رحلتك من فضلك.",
@@ -107,7 +131,10 @@ def compose_flight_answer(info: dict | None, lang: str) -> str:
 
 
 def compose_directions(result: dict | None, lang: str) -> str:
-    """Render a `directions` tool result into a route answer in `lang`."""
+    """Render a `directions` tool result into a concise route answer in `lang`.
+
+    Kept short on purpose — the full step path is drawn on the map card, so the
+    chat answer is just destination + distance + walk time (avoids an RTL run-on)."""
     route = (result or {}).get("route") or []
     if not route:
         return template("no_route", lang)
@@ -115,7 +142,6 @@ def compose_directions(result: dict | None, lang: str) -> str:
     summary = (result or {}).get("route_summary") or {}
     return template("directions", lang).format(
         dest=steps[-1],
-        route=" → ".join(steps),
         distance=summary.get("distance_m", 0),
         minutes=summary.get("walking_time_min", 0),
     )

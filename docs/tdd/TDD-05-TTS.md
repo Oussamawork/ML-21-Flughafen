@@ -1,7 +1,11 @@
 # TDD-05 — Text-to-Speech (Multilingual)
 
-**Component:** `speech/tts/`
-**Status:** ⚪ Not started
+**Component:** `backend/app/services/tts.py`
+**Status:** 🟢 Built — real **local** neural TTS (Meta **MMS-TTS** via the installed
+`transformers`/`torch`, on CPU, **no key**, default `TTS_PROVIDER=local`); behind the
+existing `TTS` interface so `/speak` + `/converse` and the frontend autoplay are
+unchanged. ar/fr/en voices; Darija→Arabic. Live-verified. Hosted ElevenLabs/Azure
+remain a clean drop-in behind the same interface.
 **Depends on:** TDD-02 (produces text+language) · **Consumed by:** TDD-06 (`/speak`)
 
 ---
@@ -19,10 +23,16 @@ language for hands-free interaction.
 ## 3. Design
 
 ### 3.1 Provider
-- Pluggable `TTSProvider` interface; default **ElevenLabs**, alt **Azure
-  Cognitive Speech**. Selected via `TTS_PROVIDER`.
-- Rationale: high-quality multilingual neural voices out of the box; TTS is
-  infrastructure, not the graded ML contribution (that's Whisper, TDD-01).
+- Pluggable `TTS` interface, selected via `TTS_PROVIDER`. **Default `local` = Meta
+  **MMS-TTS** (`facebook/mms-tts-{ara,fra,eng}`) run locally on CPU via the
+  `transformers`/`torch` stack already pulled by the ASR path — **no API key, fully
+  offline** (same philosophy as the fine-tuned Whisper). `stub` = silent WAV (tests).
+- Rationale: keeps the whole pipeline runnable offline/key-free (the project's hard
+  rule); TTS is infrastructure, not the graded ML contribution (that's Whisper,
+  TDD-01). **Hosted ElevenLabs/Azure** stay available behind the same interface for
+  premium quality when a key is wired (not built in v1).
+- One model **per language**, lazy-loaded + cached for the process; a bounded phrase
+  cache makes replays/identical answers instant (the latency note in §6).
 
 ### 3.2 Language → voice mapping
 ```yaml
@@ -67,8 +77,11 @@ Provider SDK/HTTP (`elevenlabs` or `azure-cognitiveservices-speech` / REST),
 
 ## 7. Task checklist
 
-- [ ] `TTSProvider` interface + ElevenLabs adapter (+ mock for tests)
-- [ ] Language→voice config map
-- [ ] `synthesize()` returning bytes + content type
-- [ ] `/speak` endpoint glue (TDD-06)
-- [ ] (opt) local/offline fallback provider
+- [x] `TTS` interface + **local MMS-TTS** provider (+ `StubTTS` for tests)
+- [x] Language→model map (config-driven; `ary`→ar voice; `TTS_MODEL_<LANG>` overrides)
+- [x] `synthesize()` returning WAV bytes + content type (float→16-bit PCM); phrase cache
+- [x] `/speak` + `/converse` glue (TDD-06) — already wired; no change needed
+- [x] Tests (`tests/test_tts.py`, MMS engine faked → no model download); 61 backend tests
+- [ ] (opt) hosted ElevenLabs/Azure adapter for premium quality (same interface)
+- Notes: MMS Arabic mispronounces embedded Latin (e.g. gate "B12"); Darija uses the
+  Arabic voice — both acceptable (TTS is infra; the owned Darija model is Whisper).

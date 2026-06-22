@@ -39,12 +39,14 @@ then chats by voice/text. Panels:
   label/value grid: airline, terminal, gate, check-in, baggage, boarding, status;
   from `POST /flight`. **Check-in** is KB-sourced (TDD-04, from `/flight.checkin`);
   **boarding** ← `estimated || scheduled`; status renders as plain text.
-- **Airport Map card** — fetches `POST /map` (TDD-04) and draws the **live route
-  polyline** + distance/walk banner; nodes coloured by state (current=green,
-  target=red, on-route=blue); positions/zones come from the KB. Routes to the
-  flight's gate by default, but **any node is clickable to re-route** (sends
-  `to_node`, overriding the gate) with a "Back to my gate" reset — so the passenger
-  can explore. `lib/map-seed.ts` is the pre-fetch/offline fallback shell.
+- **Airport Map card** — the **real Zayed International Airport (Terminal A) map**
+  as the backdrop (`public/assets/terminal-a-map.png`, © airportmaps.com, case-study
+  use), with a green **"You are here"** pin and the flight's **concourse highlighted
+  red + the real gate label** (e.g. "B12"), from `POST /map` (TDD-04). The four
+  concourses A–D are **clickable to explore** (sends `to_node`, "Back to my gate"
+  resets); distance/walk banner on top. Node `positions` (% over the image) come from
+  the KB; `lib/map-seed.ts` is the pre-fetch/offline fallback. Real AirLabs gates
+  (C33, B20…) resolve to their concourse, so live flights light up the map.
 - **Airport Agent card** — chat (Passenger/SkyGuide lines) with a **mic button**
   (`MediaRecorder` → 16 kHz WAV → `/converse` → fine-tuned Whisper), typed
   `/chat`, a voice-over toggle + replay (`/speak`), and per-message RTL.

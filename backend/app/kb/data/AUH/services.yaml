@@ -1,39 +1,39 @@
-# Airport services (TDD-04) — backs the `find_service` tool. Seeded from SkyGuide
-# services.json. `node` ties each service to a layout.yaml node for routing/proximity.
+# Airport services (TDD-04) — backs the `find_service` tool. `node` ties each
+# service to a layout.yaml node for routing/proximity (kept in sync with layout).
 services:
   - id: pharmacy-a
     name: Airport Pharmacy
     type: pharmacy
     terminal: A
-    zone: Security Exit
-    node: pharmacy
+    zone: After security
+    node: security
     hours: 24/7
   - id: lounge-c
     name: Pearl Lounge
     type: lounge
     terminal: A
-    zone: Gate C07
-    node: gate-c07
+    zone: Concourse C
+    node: concourse-c
     hours: 05:00-01:00
-  - id: coffee-b
+  - id: coffee-df
     name: Sky Coffee
     type: coffee
     terminal: A
-    zone: Duty Free
+    zone: Duty free plaza
     node: duty-free
     hours: 24/7
   - id: restaurant-b
     name: Cloud Table
     type: restaurant
     terminal: A
-    zone: Gate B12
-    node: gate-b12
+    zone: Concourse B
+    node: concourse-b
     hours: 06:00-23:00
   - id: restroom-central
     name: Central Restrooms
     type: restroom
     terminal: A
-    zone: Security Exit
+    zone: After security
     node: security
     hours: 24/7
   - id: atm-checkin

@@ -29,7 +29,7 @@ export function LandingPage({ onEnter }: Props) {
 
       <section className="relative z-[2] mx-auto mt-[18vh] max-w-[1240px] max-[980px]:mt-[12vh]">
         <p className="m-0 mb-3.5 text-xs font-[950] uppercase text-red">
-          Sheikh Zayed International Airport
+          Zayed International Airport
         </p>
         <h1 className="m-0 max-w-[680px] text-[clamp(54px,8vw,104px)] leading-[.95]">
           Your Guide in the Sky.

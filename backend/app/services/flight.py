@@ -132,7 +132,7 @@ _MOCK: dict[str, dict[str, dict]] = {
             "flight_number": "EK201", "airline": "EK", "status": "active",
             "direction": "departure", "scheduled": "2026-06-21 09:40",
             "estimated": "2026-06-21 10:20", "actual": None,
-            "terminal": "T3", "gate": "A7", "baggage": None, "delay_minutes": 40,
+            "terminal": "A", "gate": "A7", "baggage": None, "delay_minutes": 40,
             "departure_airport": "AUH", "arrival_airport": "JFK",
             "aircraft": "B77W", "source": "mock",
         },

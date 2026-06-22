@@ -24,5 +24,10 @@ def build_langgraph_agent(
     knowledge_base = knowledge_base or build_knowledge_base()
     max_hops = settings.max_tool_hops if max_hops is None else max_hops
     registry = build_tool_registry(flight_provider, knowledge_base)
-    graph = build_graph(llm_provider, registry, max_hops)
+    # Offline fallback so a hosted-LLM failure (rate limit/outage) degrades to the
+    # deterministic brain instead of crashing the turn. Cheap, key-free, no network.
+    from .providers.offline import OfflineProvider
+
+    fallback = OfflineProvider()
+    graph = build_graph(llm_provider, registry, max_hops, fallback=fallback)
     return LangGraphAgent(graph, registry, max_hops)

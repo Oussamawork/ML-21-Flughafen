@@ -75,4 +75,5 @@ export interface MapResponse {
   route_summary: RouteSummary | null;
   current_position: string | null;
   to_node: string | null;
+  gate_label: string | null;
 }

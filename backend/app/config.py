@@ -102,8 +102,9 @@ class Settings:
     )
 
     # --- tts (TDD-05) ---
-    # "stub" returns silent audio; real providers: "elevenlabs" / "azure".
-    tts_provider: str = field(default_factory=lambda: os.getenv("TTS_PROVIDER", "stub"))
+    # "local" (default) = MMS-TTS neural voices, local/CPU, no key; "stub" = silent
+    # WAV (tests). Reserved: "elevenlabs"/"azure" (same interface, add when keyed).
+    tts_provider: str = field(default_factory=lambda: os.getenv("TTS_PROVIDER", "local"))
 
 
 settings = Settings()

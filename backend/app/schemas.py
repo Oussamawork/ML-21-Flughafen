@@ -115,3 +115,4 @@ class MapResponse(BaseModel):
     route_summary: dict | None = None                 # {distance_m, walking_time_min, steps}
     current_position: str | None = None
     to_node: str | None = None
+    gate_label: str | None = None                     # real gate code at the target (e.g. C33)
