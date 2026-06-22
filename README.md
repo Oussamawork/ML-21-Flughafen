@@ -8,9 +8,11 @@ Whisper)** → **LLM agent (LangGraph)** → **tools (AirLabs flight API) / RAG 
 base (ChromaDB)** → **TTS (local MMS-TTS)** → response.
 
 The graded ML contribution is the **fine-tuned Whisper** model for Darija/Arabic
-(`asr_finetuning/`, WER 108→28.8%). The LLM, TTS, and flight data are external
-infrastructure by design. See [`docs/PROGRESS.md`](docs/PROGRESS.md) for the live
-status board and [`docs/tdd/`](docs/tdd) for the Technical Design Documents.
+(`asr_finetuning/`, WER 108→28.8%), published on the Hugging Face Hub:
+**[🤗 Amassu/whisper-small-darija](https://huggingface.co/Amassu/whisper-small-darija)**.
+The LLM, TTS, and flight data are external infrastructure by design. See
+[`docs/PROGRESS.md`](docs/PROGRESS.md) for the live status board and
+[`docs/tdd/`](docs/tdd) for the Technical Design Documents.
 
 ## Run with Docker (recommended)
 
