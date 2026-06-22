@@ -5,7 +5,7 @@ Update this at the end of every working session so any future session (human or
 AI) can resume without re-reading everything.
 
 **Project:** Multilingual Smart Airport Wayfinding Assistant (case study: AUH)
-**Branch:** `feat/tdd-05-tts`
+**Branch:** `feat/tdd-09-deployment`
 
 ---
 
@@ -23,13 +23,12 @@ Legend: ⚪ Not started · 🟡 In progress · 🟢 Done · 🔵 Blocked
 | TTS | TDD-05 | 🟢 | **Built** — real **local MMS-TTS** (`facebook/mms-tts-{ara,fra,eng}`, on-CPU, no key, `TTS_PROVIDER=local` default) behind the existing `TTS` interface; `/speak`+`/converse` now speak; ar/fr/en (Darija→Arabic); live-verified. Tests keep stub TTS |
 | Backend API (FastAPI) | TDD-06 | 🟢 | All stages real: STT (fine-tuned Whisper, `LOAD_STT=true`), agent (LangGraph), KB+RAG, TTS (local MMS-TTS); `/health` reports active backends; `/transcribe /chat /speak /converse /flight /map /airports` + WS; 61 tests passing |
 | Frontend (Next.js) | TDD-07 | 🟡 | **SkyGuide-identical redesign**: landing page + 4-card dashboard (Flight `/flight` + KB check-in, Agent chat+mic on the real agent, **live Map route from `/map`**, JSON proof); live-verified; build green. Remaining: optional WebSocket streaming |
-| Evaluation | TDD-08 | ⚪ | Designed |
+| Evaluation | TDD-08 | 🟢 | **Built** — `evaluation/` harness scores intent/tool/facts/language/FAQ-hit/latency/robustness over a labeled ar/ary/fr/en set vs the deterministic offline agent (reproducible). Latest: intent 100%, facts 100%, tools 100%, lang 89%, robustness 4/4; report `evaluation/reports/system_eval.md`; pytest guard `tests/test_eval.py` |
 | Deployment (Docker) | TDD-09 | 🟢 | **Built** — `backend/Dockerfile` (CPU torch) + `frontend/Dockerfile` (Next standalone) + `deploy/docker-compose.yml` (light default) + `docker-compose.full.yml` (real stack: Whisper+RAG+TTS+live providers); root README setup/deploy; CI workflow. Compose `config` validated; build/run + live PaaS are the user's step (Docker daemon / account) |
 
 **Milestones:** M1 Speech-in · M2 Brain · M3 Knowledge · M4 Speech-out+UI ·
-M5 Eval+Deploy. → **M4 done** (real local TTS; the whole STT→agent→KB→TTS pipeline
-now runs for real, offline/key-free). Next: **M5** — evaluation (TDD-08) + Docker
-deployment (TDD-09).
+M5 Eval+Deploy. → **M5 done** — evaluation (TDD-08) + Docker deployment (TDD-09)
+shipped. **All ten TDDs (00–09) are built; the project is feature-complete.**
 
 ## 2. Key decisions (chronological)
 
@@ -347,6 +346,20 @@ deployment (TDD-09).
   (gate "B12"); Darija uses the Arabic voice (TTS is infra; owned model is Whisper).
 - **Next:** M5 — TDD-08 evaluation + TDD-09 deployment (Docker).
 
+### Session 2026-06-22 — TDD-08 evaluation (M5)
+- Built `evaluation/`: `scenarios.yaml` (27 labeled ar/ary/fr/en cases), `scorers.py`
+  (pure), `run_eval.py` (in-process harness vs the deterministic offline agent +
+  mock flight + keyword KB → reproducible, key-free), `reports/system_eval.md`.
+- Measures comprehension (intent, per-language), tool correctness, answer facts,
+  language match, FAQ retrieval hit-rate, agent latency p50/p95, and robustness
+  (flight down / LLM-failure→offline / unknown flight / code-mixed).
+- **Results:** intent 100%, facts 100%, tools 100%, FAQ-hit 100% (en/fr keyword),
+  language 89% (the 3 Darija cases detect as `ar` — documented), latency p50 0.7ms /
+  p95 2.8ms, robustness 4/4. ASR headline (WER 108→28.8%) linked from RESULTS_TDD-01.
+- Added `tests/test_eval.py` guard (gates intent/facts/tools/robustness) → 65 tests.
+- Also fixed a frontend bug (agent chat auto-scroll yanked the whole page down) on a
+  separate branch `fix/agent-page-scroll` (merged, PR #20).
+
 ### Session 2026-06-22 (cont.) — TDD-09 deployment (M5 close-out)
 - Containerized the system: `backend/Dockerfile` (python:3.13-slim, **CPU-only
   torch**, full-capable — imports asr_finetuning for STT; HF weights cached in a
@@ -358,7 +371,7 @@ deployment (TDD-09).
   `.github/workflows/ci.yml` (backend pytest on light deps + frontend build).
 - **Step 0:** Docker 29.5 + Compose v5.1 installed, **daemon not running** → both
   compose files `config`-validated; image build/run + live PaaS deploy are the
-  user's step. **Next:** open the PR; (optional) live PaaS deploy.
+  user's step. **All ten TDDs (00–09) are now built.** Next: (optional) live PaaS deploy.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
