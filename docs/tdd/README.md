@@ -15,7 +15,7 @@ with TDD-00; each component has its own TDD. Track execution in
 | [TDD-06](TDD-06-Backend-API.md) | Backend REST API & WebSockets | 🟡 |
 | [TDD-07](TDD-07-Frontend.md) | Web demo frontend (Next.js) | 🟡 |
 | [TDD-08](TDD-08-Evaluation.md) | Evaluation & testing | 🟡 |
-| [TDD-09](TDD-09-Deployment.md) | Deployment & DevOps (Docker) | ⚪ |
+| [TDD-09](TDD-09-Deployment.md) | Deployment & DevOps (Docker) | 🟢 |
 
 **Template per TDD:** Purpose → Requirements satisfied → Design/Architecture →
 Interfaces & data contracts → Dependencies → Open questions/risks → Task checklist.

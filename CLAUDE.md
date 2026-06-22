@@ -18,8 +18,8 @@ default, Groq/OpenAI when a key is set), and the **knowledge base + RAG** (TDD-0
 service index, and ChromaDB+multilingual-embedding FAQ retrieval, exposed as the
 agent's `directions`/`find_service`/`faq` tools and a `/map` endpoint, and **TTS** (TDD-05,
 `backend/app/services/tts.py`): real local MMS-TTS neural voices (on-CPU, no key).
-The backend now runs every component for real — only evaluation (TDD-08) and
-deployment (TDD-09) remain.
+The backend now runs every component for real, and the system is containerized
+(TDD-09, `deploy/`). Evaluation (TDD-08, `evaluation/`) closes out M5.
 **`docs/PROGRESS.md` has the live status board — read it first.**
 
 ## Read these first (the project's source of truth)
@@ -116,8 +116,11 @@ knowledge base (ChromaDB)** → **TTS (local MMS-TTS)** → response. Built: `ba
 + KB tools), the knowledge base in `backend/app/kb/` (TDD-04), and TTS in
 `backend/app/services/tts.py` (TDD-05). Like the agent, the KB lives **inside the
 backend package** (`backend/app/kb/`, not a top-level `knowledge_base/`) since it's
-imported with the `app.` prefix and shares the service container. Still to create
-when implementing the matching TDD: `evaluation/` (TDD-08), `deploy/` (TDD-09).
+imported with the `app.` prefix and shares the service container. `deploy/` holds
+the Docker setup (TDD-09): `backend/Dockerfile` + `frontend/Dockerfile` +
+`deploy/docker-compose.yml` (light default) + `docker-compose.full.yml` (real
+stack); `docker compose -f deploy/docker-compose.yml up --build`. The evaluation
+harness (TDD-08) lives in `evaluation/`.
 
 ## Git workflow
 

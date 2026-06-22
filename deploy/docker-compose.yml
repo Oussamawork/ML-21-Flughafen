@@ -1,0 +1,40 @@
+# Local one-command bring-up (TDD-09). Default = LIGHT profile: stubs + mock +
+# keyword KB, so it boots anywhere with no API keys and no model downloads.
+#   docker compose -f deploy/docker-compose.yml up --build
+# For the real stack (fine-tuned Whisper + ChromaDB RAG + local TTS + live data),
+# layer the full override (see docker-compose.full.yml).
+name: airport-assistant
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      LOAD_STT: "false"            # stub STT (no Whisper download)
+      LLM_PROVIDER: "offline"      # deterministic, no key
+      KB_RETRIEVER: "keyword"      # no embedding model
+      TTS_PROVIDER: "stub"         # silent WAV
+      FLIGHT_API_PROVIDER: "mock"  # canned flights (SV624/EK201)
+    volumes:
+      - models:/models                          # HF weight cache (full profile)
+      - kb_chroma:/app/backend/.kb_chroma        # ChromaDB store (full profile)
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: "http://localhost:8000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  models:
+  kb_chroma:
