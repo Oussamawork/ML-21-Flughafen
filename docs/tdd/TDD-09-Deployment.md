@@ -1,7 +1,11 @@
 # TDD-09 — Deployment & DevOps
 
 **Component:** `deploy/`
-**Status:** ⚪ Not started
+**Status:** 🟢 Built — `backend/Dockerfile` (CPU torch) + `frontend/Dockerfile`
+(Next standalone) + `deploy/docker-compose.yml` (light default) +
+`docker-compose.full.yml` (real stack) + root README setup/deploy + CI
+(`.github/workflows/ci.yml`). Compose validated; image build/run is the user's
+step (Docker daemon). Live PaaS deploy documented (needs the user's account).
 **Depends on:** TDD-06 (backend), TDD-07 (frontend)
 
 ---
@@ -62,9 +66,12 @@ Docker, Docker Compose, Railway/Render account, HF Hub (model pull).
 
 ## 7. Task checklist
 
-- [ ] `backend/Dockerfile` (CPU) + `.env.example`
-- [ ] `frontend/Dockerfile`
-- [ ] `docker-compose.yml` (backend + frontend + Chroma volume)
-- [ ] Root README "Environment setup" section
-- [ ] Deploy to Railway/Render + health check
-- [ ] (opt) GitHub Actions CI
+- [x] `backend/Dockerfile` (CPU-only torch, full-capable) + `.dockerignore`
+- [x] `frontend/Dockerfile` (multi-stage, Next `output: standalone`) + `.dockerignore`
+- [x] `deploy/docker-compose.yml` (light default) + `docker-compose.full.yml`
+      (real stack) — backend + frontend + `models`/`kb_chroma` volumes; `config` validated
+- [x] Root `README.md` — Docker run (light/full), local dev, test/eval, PaaS deploy
+- [x] GitHub Actions CI (`.github/workflows/ci.yml`) — backend pytest + frontend build
+- [ ] **Live** Railway/Render deploy (needs the user's account; steps documented)
+- Light/full profiles via env (`LOAD_STT`/`KB_RETRIEVER`/`TTS_PROVIDER`/...); HF
+      weights cached in the `models` volume; secrets stay in `backend/.env` (gitignored)
