@@ -43,6 +43,11 @@ export function MapCard({ flightNumber, position }: Props) {
   const current = map?.current_position ?? position;
   const target = map?.to_node ?? null;
   const gateLabel = map?.gate_label ?? null;
+  const routePoints = (map?.route ?? [])
+    .map((n) => positions[n])
+    .filter(Boolean)
+    .map((p) => `${p.x},${p.y}`)
+    .join(" ");
   const summary = map?.route_summary;
   const exploring = destination !== null;
   const youPos = positions[current];
@@ -82,6 +87,26 @@ export function MapCard({ flightNumber, position }: Props) {
           alt="Zayed International Airport — Terminal A map"
           className="absolute inset-0 h-full w-full object-contain"
         />
+
+        {/* Dashed route line from "You" to the target gate. */}
+        {routePoints && (
+          <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="pointer-events-none absolute inset-0 z-[5] h-full w-full"
+          >
+            <polyline
+              points={routePoints}
+              fill="none"
+              stroke="#df1f3d"
+              strokeWidth={1.2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="2.5 2"
+              style={{ filter: "drop-shadow(0 4px 8px rgba(223,31,61,.3))" }}
+            />
+          </svg>
+        )}
 
         {/* Concourse markers (A/B/C/D) — clickable; target highlighted. */}
         {CONCOURSES.map((node) => {
