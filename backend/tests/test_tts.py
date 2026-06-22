@@ -8,8 +8,10 @@ import types
 
 import torch
 
+import pytest
+
 from app.config import settings
-from app.services.tts import MmsTTS, StubTTS, build_tts
+from app.services.tts import ElevenLabsTTS, MmsTTS, StubTTS, build_tts
 
 
 class _FakeTokenizer:
@@ -71,3 +73,15 @@ def test_build_tts_dispatch(monkeypatch):
     assert isinstance(build_tts(), MmsTTS)
     monkeypatch.setattr(settings, "tts_provider", "stub")
     assert isinstance(build_tts(), StubTTS)
+
+
+def test_elevenlabs_requires_key():
+    with pytest.raises(RuntimeError):
+        ElevenLabsTTS("", "voice", "model")
+
+
+def test_elevenlabs_degrades_on_api_error():
+    el = ElevenLabsTTS("k", "voice", "model", fallback=StubTTS())
+    el._fetch = lambda _text: (_ for _ in ()).throw(RuntimeError("quota"))
+    audio, content_type = el.synthesize("Your gate is B12", "en")
+    assert content_type == "audio/wav" and audio[:4] == b"RIFF"  # stub fallback

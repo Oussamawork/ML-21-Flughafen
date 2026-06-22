@@ -102,9 +102,18 @@ class Settings:
     )
 
     # --- tts (TDD-05) ---
-    # "local" (default) = MMS-TTS neural voices, local/CPU, no key; "stub" = silent
-    # WAV (tests). Reserved: "elevenlabs"/"azure" (same interface, add when keyed).
+    # "local" (default) = MMS-TTS neural voices, local/CPU, no key; "elevenlabs" =
+    # hosted neural voice (natural, reads numbers; needs a key, falls back to local);
+    # "stub" = silent WAV (tests).
     tts_provider: str = field(default_factory=lambda: os.getenv("TTS_PROVIDER", "local"))
+    elevenlabs_api_key: str = field(default_factory=lambda: os.getenv("ELEVENLABS_API_KEY", ""))
+    # Default voice (multilingual): "Rachel". Override per taste with ELEVENLABS_VOICE_ID.
+    elevenlabs_voice_id: str = field(
+        default_factory=lambda: os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+    )
+    elevenlabs_model: str = field(
+        default_factory=lambda: os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2")
+    )
 
 
 settings = Settings()

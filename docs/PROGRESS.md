@@ -362,6 +362,15 @@ deployment (TDD-09).
   separate branch `fix/agent-page-scroll` (PR off main).
 - **Next:** TDD-09 (Docker deployment) — the last component.
 
+### Session 2026-06-22 (cont.) — ElevenLabs hosted TTS
+- Added `ElevenLabsTTS` (`TTS_PROVIDER=elevenlabs`) behind the existing `TTS`
+  interface: natural multilingual voice that **reads gate codes/numbers** (local
+  MMS drops embedded Latin/digits and sounds robotic). Stdlib HTTP, MP3 out,
+  phrase-cached (free-tier quota), and **degrades to local MMS on any API error**.
+- Config: `ELEVENLABS_API_KEY`/`ELEVENLABS_VOICE_ID`/`ELEVENLABS_MODEL`
+  (`eleven_multilingual_v2`). Local MMS stays the no-key default. 67 tests
+  (+ fallback/key unit tests). **Next:** add the ElevenLabs key + restart to verify live.
+
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD
 - Did: ...
