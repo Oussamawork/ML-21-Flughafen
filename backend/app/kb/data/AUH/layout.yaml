@@ -59,11 +59,13 @@ concourses:
 # (hub end -> tip, % coords) along which gates are evenly spaced. Used to place a
 # marker for every gate (A1..D49) on the map and to pin a flight's exact gate.
 # Ranges follow the real AUH map labels (A01-A09, B10-B26, C27-C42, D43-D49).
+# start = the gate where numbering begins; end = where it ends. A1 sits at the A
+# pier tip (by the aircraft); the others run from the central hub out to the tip.
 concourse_gates:
-  A: {from: 1,  to: 9,  start: {x: 43, y: 50}, end: {x: 10, y: 63}}
-  B: {from: 10, to: 26, start: {x: 53, y: 57}, end: {x: 60, y: 90}}
-  C: {from: 27, to: 42, start: {x: 60, y: 49}, end: {x: 93, y: 49}}
-  D: {from: 43, to: 49, start: {x: 47, y: 41}, end: {x: 45, y: 7}}
+  A: {from: 1,  to: 9,  start: {x: 17, y: 55}, end: {x: 42, y: 49}}
+  B: {from: 10, to: 26, start: {x: 53, y: 57}, end: {x: 59, y: 88}}
+  C: {from: 27, to: 42, start: {x: 61, y: 50}, end: {x: 92, y: 48}}
+  D: {from: 43, to: 49, start: {x: 47, y: 41}, end: {x: 45, y: 9}}
 
 # Arrivals: any AirLabs arr_baggage belt resolves to the reclaim hall.
 baggage_node: baggage

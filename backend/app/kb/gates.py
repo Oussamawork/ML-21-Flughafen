@@ -28,9 +28,9 @@ def gate_markers(layout: dict) -> list[dict]:
         length = math.hypot(dx, dy) or 1.0
         px, py = -dy / length, dx / length  # perpendicular unit (stub offset)
         span = (to - fr) or 1
+        off = float(spec.get("offset", 1.4))  # small, keeps dots on the pier
         for i, num in enumerate(range(fr, to + 1)):
             t = i / span
-            off = 2.4 if i % 2 == 0 else -2.4
             out.append({
                 "code": f"{letter}{num}",
                 "x": round(s["x"] + dx * t + px * off, 2),
