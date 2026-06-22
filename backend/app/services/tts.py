@@ -159,6 +159,7 @@ class ElevenLabsTTS:
             "text": text,
             "model_id": self._model,
             "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
+            "apply_text_normalization": "on",  # spell out gate codes/digits (e.g. B15, 19:19)
         }).encode()
         req = urllib.request.Request(
             f"{self._BASE}/{self._voice}", data=body, method="POST",
