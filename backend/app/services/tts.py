@@ -18,12 +18,26 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import struct
 from typing import Protocol
 
 from ..config import settings
 
 logger = logging.getLogger(__name__)
+
+_MD_LINK = re.compile(r"\[([^\]]+)\]\([^)]+\)")  # [text](url) -> text
+
+
+def _speech_text(text: str) -> str:
+    """Strip markdown so the voice reads clean prose, not `**`/`*`/`` ` ``/`#`
+    around gate codes and numbers (e.g. `**B15**` was spoken as nothing)."""
+    text = _MD_LINK.sub(r"\1", text)
+    text = text.replace("**", "").replace("__", "").replace("`", "").replace("~~", "")
+    text = re.sub(r"(?<!\w)[*_](?=\S)", "", text)  # opening * / _ emphasis
+    text = re.sub(r"(?<=\S)[*_](?!\w)", "", text)  # closing * / _ emphasis
+    text = re.sub(r"^\s{0,3}#{1,6}\s+", "", text, flags=re.MULTILINE)  # headings
+    return text
 
 
 def _silent_wav(duration_s: float = 0.4, sample_rate: int = 16000) -> bytes:
@@ -97,7 +111,7 @@ class MmsTTS:
         return eng
 
     def synthesize(self, text: str, language: str) -> tuple[bytes, str]:
-        text = (text or "").strip()
+        text = _speech_text(text or "").strip()
         if not text:
             return _silent_wav(0.2), "audio/wav"
         model_id = self._models.get(language, self._models["en"])
@@ -155,7 +169,7 @@ class ElevenLabsTTS:
             return r.read()
 
     def synthesize(self, text: str, language: str) -> tuple[bytes, str]:
-        text = (text or "").strip()
+        text = _speech_text(text or "").strip()
         if not text:
             return _silent_wav(0.2), "audio/wav"
         clipped = text[: self._max_chars]

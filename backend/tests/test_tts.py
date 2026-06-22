@@ -11,7 +11,7 @@ import torch
 import pytest
 
 from app.config import settings
-from app.services.tts import ElevenLabsTTS, MmsTTS, StubTTS, build_tts
+from app.services.tts import ElevenLabsTTS, MmsTTS, StubTTS, _speech_text, build_tts
 
 
 class _FakeTokenizer:
@@ -40,6 +40,14 @@ def _provider_with_fakes():
     for mid in set(prov._models.values()):
         prov._loaded[mid] = fake
     return prov, model
+
+
+def test_speech_text_strips_markdown_around_codes():
+    # `**B15**` was spoken as nothing — the voice must read the bare code.
+    src = "البوابة هي **B15** في الطرمينال **A**. الرحلة `EY102`."
+    out = _speech_text(src)
+    assert "**" not in out and "`" not in out
+    assert "B15" in out and "A" in out and "EY102" in out
 
 
 def test_synthesize_returns_valid_wav():
