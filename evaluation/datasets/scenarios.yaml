@@ -1,0 +1,43 @@
+# Evaluation scenarios (TDD-08). Scored in-process against the deterministic
+# offline agent + mock flight provider + keyword KB (reproducible, key-free).
+# Facts are language-agnostic (gate codes, service names) so `expect_contains`
+# works across languages; FAQ uses `expect_source` (the matched KB topic).
+# Mock flights: SV624 -> gate B12 / Concourse B; EK201 -> gate A7 / Concourse A.
+
+scenarios:
+  # --- flight gate (find_gate), typed flight number, 4 languages ---
+  - {id: gate-en, lang: en, text: "where is my gate?", flight_number: SV624, expect_intent: find_gate, expect_tool: flight_status, expect_contains: ["B12"], expect_lang: en}
+  - {id: gate-fr, lang: fr, text: "où est ma porte ?", flight_number: SV624, expect_intent: find_gate, expect_contains: ["B12"], expect_lang: fr}
+  - {id: gate-ar, lang: ar, text: "أين بوابتي؟", flight_number: SV624, expect_intent: find_gate, expect_contains: ["B12"], expect_lang: ar}
+  - {id: gate-ary, lang: ary, text: "فين الباب ديالي؟", flight_number: SV624, expect_intent: find_gate, expect_contains: ["B12"], expect_lang: ary}
+  - {id: gate-code-en, lang: en, text: "what is the gate for EK201?", expect_intent: find_gate, expect_contains: ["A7"], expect_lang: en}
+  - {id: gate-code-text, lang: en, text: "gate for SV-624 please", expect_intent: find_gate, expect_contains: ["B12"], expect_lang: en}
+
+  # --- wayfinding (directions): flight_status -> directions chain ---
+  - {id: dir-en, lang: en, text: "how do I get to my gate?", flight_number: SV624, expect_intent: directions, expect_tool: directions, expect_contains: ["Concourse B"], expect_lang: en}
+  - {id: dir-fr, lang: fr, text: "comment aller à ma porte ?", flight_number: SV624, expect_intent: directions, expect_tool: directions, expect_contains: ["Concourse B"], expect_lang: fr}
+  - {id: dir-ar, lang: ar, text: "ما هو الطريق إلى بوابتي؟", flight_number: SV624, expect_intent: directions, expect_tool: directions, expect_contains: ["Concourse B"], expect_lang: ar}
+  - {id: dir-ary, lang: ary, text: "كيفاش نمشي للباب ديالي؟", flight_number: SV624, expect_intent: directions, expect_tool: directions, expect_contains: ["Concourse B"], expect_lang: ary}
+  - {id: dir-pos, lang: en, text: "how far is my gate from here?", flight_number: EK201, position: security, expect_intent: directions, expect_tool: directions, expect_contains: ["Concourse A"], expect_lang: en}
+
+  # --- services (find_service) ---
+  - {id: svc-pharm-en, lang: en, text: "where is the nearest pharmacy?", expect_intent: find_service, expect_tool: find_service, expect_contains: ["Airport Pharmacy"], expect_lang: en}
+  - {id: svc-pharm-fr, lang: fr, text: "où est la pharmacie ?", expect_intent: find_service, expect_contains: ["Airport Pharmacy"], expect_lang: fr}
+  - {id: svc-pharm-ar, lang: ar, text: "أين الصيدلية؟", expect_intent: find_service, expect_contains: ["Airport Pharmacy"], expect_lang: ar}
+  - {id: svc-lounge-en, lang: en, text: "is there a lounge?", expect_intent: find_service, expect_contains: ["Pearl Lounge"], expect_lang: en}
+  - {id: svc-coffee-en, lang: en, text: "where can I get coffee?", expect_intent: find_service, expect_contains: ["Sky Coffee"], expect_lang: en}
+  - {id: svc-restroom-en, lang: en, text: "I need a restroom", expect_intent: find_service, expect_contains: ["Central Restrooms"], expect_lang: en}
+
+  # --- FAQ (RAG): intent robust; expect_source is the retrieval-hit (soft) metric ---
+  - {id: faq-baggage-en, lang: en, text: "I lost my baggage, what do I do?", expect_intent: faq, expect_tool: faq, expect_source: "faq/baggage", expect_lang: en}
+  - {id: faq-prayer-en, lang: en, text: "where is the prayer room?", expect_intent: faq, expect_source: "faq/prayer", expect_lang: en}
+  - {id: faq-connect-en, lang: en, text: "what should I do for a connecting flight transfer?", expect_intent: faq, expect_source: "faq/connections", expect_lang: en}
+  - {id: faq-checkin-en, lang: en, text: "when does check-in close?", expect_intent: faq, expect_source: "faq/checkin", expect_lang: en}
+  - {id: faq-baggage-fr, lang: fr, text: "où sont les bagages perdus ?", expect_intent: faq, expect_source: "faq/baggage", expect_lang: fr}
+  - {id: faq-prayer-ar, lang: ar, text: "أين المصلى؟", expect_intent: faq, expect_lang: ar}
+  - {id: faq-baggage-ary, lang: ary, text: "فين نقدر نسول على الباگاج اللي توضر؟", expect_intent: faq, expect_lang: ary}
+
+  # --- smalltalk / fallback (no tool) ---
+  - {id: hello-en, lang: en, text: "hello there", expect_intent: smalltalk, expect_lang: en}
+  - {id: hello-fr, lang: fr, text: "bonjour", expect_intent: smalltalk, expect_lang: fr}
+  - {id: thanks-en, lang: en, text: "thanks", expect_intent: smalltalk, expect_lang: en}
