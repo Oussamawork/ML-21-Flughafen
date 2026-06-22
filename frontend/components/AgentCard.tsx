@@ -13,6 +13,18 @@ export interface AgentMessage {
   language?: string;
 }
 
+// Render the agent's light markdown (only **bold**, e.g. gate codes) instead of
+// showing literal `**`. Splits on the bold delimiters and bolds the inner parts.
+function renderText(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    ),
+  );
+}
+
 // Mirrors SkyGuide's .agent-card, plus our mic capture (fine-tuned Whisper).
 interface Props {
   messages: AgentMessage[];
@@ -96,7 +108,7 @@ export function AgentCard({
             dir={isRtl(m.language) ? "rtl" : "ltr"}
             className="m-0 leading-[1.45]"
           >
-            <strong>{m.role}:</strong> {m.text}
+            <strong>{m.role}:</strong> {renderText(m.text)}
           </p>
         ))}
         {thinking && <p className="m-0 leading-[1.45] text-muted">SkyGuide: …</p>}
