@@ -22,7 +22,11 @@ SYSTEM_PROMPT = (
     "do NOT also call `find_gate`. NEVER pass placeholder text such as "
     "\"result_of_find_gate\", \"current_location\", or \"gate\" as an argument — pass "
     "the real value, and omit `from_node` and `to_node` (the passenger position is "
-    "already provided; the gate resolves the destination)."
+    "already provided; the gate resolves the destination).\n"
+    "Formatting: reply in 1-3 short, natural sentences of plain prose, as if speaking "
+    "to the passenger. Do NOT use bullet points, numbered lists, dashes as separators, "
+    "or headings. Use **bold** for at most the single most important value (the gate "
+    "code) and nothing else — do not bold every field."
 )
 
 # Human-readable language names for the per-turn language lock.
