@@ -23,6 +23,8 @@ interface Props {
   onReplay: () => void;
   onAsk: (text: string) => void;
   onAudio: (blob: Blob) => void;
+  placeholder: string;
+  rtl: boolean;
 }
 
 export function AgentCard({
@@ -34,6 +36,8 @@ export function AgentCard({
   onReplay,
   onAsk,
   onAudio,
+  placeholder,
+  rtl,
 }: Props) {
   const [text, setText] = useState("");
   const recorder = useRecorder();
@@ -119,7 +123,8 @@ export function AgentCard({
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={recorder.recording ? "Listening…" : "Ask: how much left for the gate?"}
+          dir={rtl ? "rtl" : "ltr"}
+          placeholder={recorder.recording ? "Listening…" : placeholder}
           disabled={recorder.recording}
           className="min-h-[48px] w-full rounded-lg border border-line bg-white px-3 font-[800] text-ink"
         />

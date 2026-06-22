@@ -16,6 +16,7 @@ import {
   sendChat,
   speak,
 } from "@/lib/api";
+import { agentGreeting, agentPlaceholder } from "@/lib/i18n";
 import type { FlightInfo, Language } from "@/lib/types";
 
 // SkyGuide's language select -> our backend language codes (darija = ary).
@@ -32,7 +33,7 @@ function play(url: string) {
 export default function Page() {
   const [screen, setScreen] = useState<"home" | "app">("home");
   const [flightNumber, setFlightNumber] = useState("");
-  const [language, setLanguage] = useState<UiLanguage>("en");
+  const [language, setLanguage] = useState<UiLanguage>("darija");
   const [position, setPosition] = useState<Position>("entrance");
 
   const [flight, setFlight] = useState<FlightInfo | null>(null);
@@ -42,7 +43,7 @@ export default function Page() {
   const [apiOnline, setApiOnline] = useState(false);
 
   const [messages, setMessages] = useState<AgentMessage[]>([
-    { role: "SkyGuide", text: 'Ask me: "How much left for the gate?"' },
+    { role: "SkyGuide", text: agentGreeting("darija"), language: "ary" },
   ]);
   const [thinking, setThinking] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
@@ -53,6 +54,16 @@ export default function Page() {
   const addAgent = useCallback((m: AgentMessage) => {
     setMessages((ms) => [...ms, m]);
   }, []);
+
+  // Re-localize the seeded greeting when the language changes (before any Q&A),
+  // so switching the language select visibly updates the agent card.
+  useEffect(() => {
+    setMessages((ms) =>
+      ms.length === 1 && ms[0].role === "SkyGuide"
+        ? [{ role: "SkyGuide", text: agentGreeting(language), language: toLang(language) }]
+        : ms,
+    );
+  }, [language]);
 
   // Probe the backend for the agent badge (STT model) + API-online state.
   useEffect(() => {
@@ -188,6 +199,8 @@ export default function Page() {
           onReplay={onReplay}
           onAsk={onAsk}
           onAudio={onAudio}
+          placeholder={agentPlaceholder(language)}
+          rtl={toLang(language) === "ary"}
         />
         <MapCard flightNumber={flightNumber} position={position} />
         <ApiOutputCard payload={payload} />
