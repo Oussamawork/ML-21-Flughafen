@@ -102,10 +102,28 @@ def test_tool_trace_shape_constructs_toolcall():
 
 
 def test_default_agent_imports_no_llm_sdk():
-    # The offline default must not pull in openai/groq (no network / no key).
+    # The offline default must not pull in any hosted SDK (no network / no key).
     make_agent()
     assert "openai" not in sys.modules
     assert "groq" not in sys.modules
+    assert "anthropic" not in sys.modules
+
+
+def test_fallback_provider_tries_in_order():
+    from app.agent.providers.base import LLMResult
+    from app.agent.providers.fallback import FallbackProvider
+
+    class _Boom:
+        def complete(self, **_kw):
+            raise RuntimeError("down")
+
+    class _Ok:
+        def complete(self, **_kw):
+            return LLMResult(content="ok", intent="smalltalk")
+
+    fp = FallbackProvider([_Boom(), _Ok()])
+    out = fp.complete(messages=[], tools=[], language="en", airport_id="AUH", flight_number=None)
+    assert out.content == "ok"
 
 
 # --- KB tools (TDD-04) -----------------------------------------------------

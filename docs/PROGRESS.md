@@ -362,6 +362,18 @@ deployment (TDD-09).
   separate branch `fix/agent-page-scroll` (PR off main).
 - **Next:** TDD-09 (Docker deployment) — the last component.
 
+### Session 2026-06-22 (cont.) — Claude (Anthropic) provider + fallback chain
+- Added `AnthropicProvider` (`LLM_PROVIDER=anthropic`, Claude's content-block tool
+  API — its own adapter) + a `FallbackProvider`: a hosted primary now degrades
+  **Anthropic → Groq → offline** so an outage/limit never crashes the turn.
+- Why: Groq (Llama 3.3) leaked English into Darija and mis-grounded (placeholder
+  tool args → wrong concourse). **Live-verified Claude Haiku 4.5**: fully-Darija
+  output (even "duty free"→"المتاجر الحرة", "Concourse B"→"الصالة B"), clean
+  `flight_status`→`directions(gate="B12")`, correct grounding (535 m, Concourse B).
+- `anthropic` SDK lazy-imported (offline default still pulls no SDK — asserted in
+  tests); config `ANTHROPIC_API_KEY` + `GROQ_FALLBACK_MODEL`. 66 tests.
+- **Next:** open the PR; pick the production model (Haiku vs Sonnet) by cost/quality.
+
 ### Session 2026-06-22 (cont.) — ElevenLabs hosted TTS
 - Added `ElevenLabsTTS` (`TTS_PROVIDER=elevenlabs`) behind the existing `TTS`
   interface: natural multilingual voice that **reads gate codes/numbers** (local
@@ -369,7 +381,8 @@ deployment (TDD-09).
   phrase-cached (free-tier quota), and **degrades to local MMS on any API error**.
 - Config: `ELEVENLABS_API_KEY`/`ELEVENLABS_VOICE_ID`/`ELEVENLABS_MODEL`
   (`eleven_multilingual_v2`). Local MMS stays the no-key default. 67 tests
-  (+ fallback/key unit tests). **Next:** add the ElevenLabs key + restart to verify live.
+  (+ fallback/key unit tests). **Live-verified** voice `PmGnwGtnBs40iau7JfoF`
+  (paid plan): `/speak` returns real MP3 reading "B12"/"535". **Next:** open the PR.
 
 <!-- Template for new sessions:
 ### Session YYYY-MM-DD

@@ -10,8 +10,9 @@ python-dotenv>=1.0          # loads backend/.env at startup
 # is offline (no key); openai/groq are optional, lazy-imported when selected.
 langgraph>=1.0
 langchain-core>=1.0
-# openai>=1.0    # uncomment when LLM_PROVIDER=openai
-# groq>=0.11     # uncomment when LLM_PROVIDER=groq
+# anthropic>=0.40  # uncomment when LLM_PROVIDER=anthropic (Claude)
+# openai>=1.0     # uncomment when LLM_PROVIDER=openai
+# groq>=0.11      # uncomment when LLM_PROVIDER=groq (also the Anthropic fallback)
 
 # Knowledge base + RAG (TDD-04): YAML data packs + a retriever behind an interface.
 # The default retriever is "chroma" (real multilingual embeddings, runs locally on
